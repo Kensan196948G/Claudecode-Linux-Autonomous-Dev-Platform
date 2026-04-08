@@ -109,6 +109,25 @@
         "issue_factory_last_run_at": {"type": ["string", "null"]}
       }
     },
+    "codex": {
+      "type": "object",
+      "properties": {
+        "available": {"type": "boolean"},
+        "setup_status": {"type": ["string", "null"]},
+        "plugin": {"type": ["string", "null"]},
+        "plugin_installed": {"type": ["boolean", "null"]},
+        "plugin_root": {"type": ["string", "null"]},
+        "plugin_state_file": {"type": ["string", "null"]},
+        "plugin_job_id": {"type": ["string", "null"]},
+        "plugin_job_status": {"type": ["string", "null"]},
+        "last_result_source": {"type": ["string", "null"]},
+        "last_result_file": {"type": ["string", "null"]},
+        "review_status": {"type": ["string", "null"]},
+        "review_verdict": {"type": ["string", "null"]},
+        "review_summary": {"type": ["string", "null"]},
+        "review_reason": {"type": ["string", "null"]}
+      }
+    },
     "github": {
       "type": "object",
       "properties": {

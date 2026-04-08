@@ -139,7 +139,17 @@
     "setup_status": "success",
     "review_status": "unknown",
     "last_checked_at": "2026-04-08 22:17:04",
-    "last_result_file": null
+    "last_result_file": "/home/kensan/Projects/Claudecode-Linux-Autonomous-Dev-Platform/claudecode-devos/runtime/codex/result.json",
+    "plugin": "codex@openai-codex",
+    "plugin_installed": true,
+    "plugin_root": "/home/kensan/.claude/plugins/cache/openai-codex/codex/1.0.1",
+    "plugin_state_file": null,
+    "plugin_job_id": null,
+    "plugin_job_status": null,
+    "last_result_source": "codex-plugin-cc",
+    "review_verdict": null,
+    "review_summary": null,
+    "review_reason": "no codex-plugin-cc review job found"
   },
   "memory": {
     "claude_home": "/home/kensan/.claude",

@@ -12,7 +12,7 @@ STATE_FILE = Path(os.environ.get("DEVOS_STATE_FILE", DEVOS_HOME / "config/state.
 LOCK_FILE = Path(os.environ.get("DEVOS_LOCK_DIR", DEVOS_HOME / "runtime/tmp")) / "state.lock"
 REQUIRED_SUCCESSES = int(os.environ.get("STABLE_REQUIRED_SUCCESSES", "3"))
 
-SUCCESS_VALUES = {"success", "passed", "pass", "ok", "clean"}
+SUCCESS_VALUES = {"success", "passed", "pass", "ok", "clean", "approved", "approve", "no issues"}
 
 
 def timestamp():
