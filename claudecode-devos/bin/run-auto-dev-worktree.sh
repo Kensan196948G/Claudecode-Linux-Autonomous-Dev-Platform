@@ -49,7 +49,14 @@ if [[ ! -s "$PROMPT" ]]; then
 fi
 
 cd "$WT_PATH"
-timeout "$AUTO_DEV_TIMEOUT_SECONDS" "$DEVOS_HOME/bin/claude-safe.sh" < "$PROMPT" >> "$LOG_FILE" 2>&1 || true
+if [[ "${DEVOS_CLAUDE_FOREGROUND:-false}" == "true" ]]; then
+  printf '[DevOS] worktree=%s\n' "$WT_PATH"
+  printf '[DevOS] prompt=%s\n' "$PROMPT"
+  printf '[DevOS] launching Claude CLI...\n'
+  timeout --foreground "$AUTO_DEV_TIMEOUT_SECONDS" "$DEVOS_HOME/bin/claude-safe.sh" "$(cat "$PROMPT")" || true
+else
+  timeout "$AUTO_DEV_TIMEOUT_SECONDS" "$DEVOS_HOME/bin/claude-safe.sh" < "$PROMPT" >> "$LOG_FILE" 2>&1 || true
+fi
 
 PR_URL=""
 if [[ -n "$(git status --porcelain)" ]]; then

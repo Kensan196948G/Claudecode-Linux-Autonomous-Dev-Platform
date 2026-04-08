@@ -52,7 +52,28 @@ CMD=(
 
 log "command: ${CMD[*]}"
 
-if [[ -n "$STDIN_FILE" ]]; then
+if [[ "${DEVOS_CLAUDE_FOREGROUND:-false}" == "true" ]]; then
+  printf '%s\n' "$$" > "$PID_FILE"
+  "$DEVOS_HOME/ops/state_manager.py" set claude.status running || true
+  "$DEVOS_HOME/ops/state_manager.py" set claude.last_pid "$$" || true
+  "$DEVOS_HOME/ops/state_manager.py" set claude.last_command "${CMD[*]}" || true
+  log "Claude foreground wrapper PID=$$"
+
+  set +e
+  if [[ -n "$STDIN_FILE" ]]; then
+    "${CMD[@]}" < "$STDIN_FILE"
+  else
+    "${CMD[@]}"
+  fi
+  RC=$?
+  set -e
+
+  rm -f "$PID_FILE"
+  "$DEVOS_HOME/ops/state_manager.py" set claude.status stopped || true
+
+  log "Claude exited rc=$RC"
+  exit "$RC"
+elif [[ -n "$STDIN_FILE" ]]; then
   "${CMD[@]}" < "$STDIN_FILE" >> "$LOG_FILE" 2>&1 &
 else
   "${CMD[@]}" >> "$LOG_FILE" 2>&1 &

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from flask import Flask, jsonify, redirect, render_template_string, request, url_for
 
-from dashboard_actions import discover_project_repositories, run_develop, run_repair_ci, running_action, stop_claude
+from dashboard_actions import discover_project_repositories, run_develop, run_repair_ci, running_action, stop_claude, terminal_launch_config
 from manual_control import clear_manual_action, select_project, select_project_path, set_manual_action, update_project
 
 DEVOS_HOME = Path(os.environ.get("DEVOS_HOME", "/opt/claudecode-devos"))
@@ -41,7 +41,7 @@ HTML = """
         const res = await fetch('/api/logs', {cache: 'no-store'});
         const data = await res.json();
         const updates = {
-          'process-snapshot': data.process_snapshot,
+          'process-snapshot': data.terminal_text,
           'claude-safe-log': data.claude_safe,
           'development-log': data.development,
           'project-runner-log': data.project_runner,
@@ -56,6 +56,20 @@ HTML = """
         const pidEl = document.getElementById('live-pids');
         if (pidEl) {
           pidEl.textContent = `DashboardジョブPID=${data.running_pid || 'なし'} / Claude PID=${data.claude_pid || 'なし'}`;
+        }
+        const cliStatus = data.cli_status || {};
+        const mascotEl = document.getElementById('cli-mascot');
+        const titleEl = document.getElementById('cli-status-title');
+        const detailEl = document.getElementById('cli-status-detail');
+        if (mascotEl) {
+          mascotEl.className = `cli-mascot ${cliStatus.state_class || 'idle'}`;
+          mascotEl.textContent = cliStatus.mascot || 'C';
+        }
+        if (titleEl) {
+          titleEl.textContent = cliStatus.title || 'Claude 待機中';
+        }
+        if (detailEl) {
+          detailEl.textContent = cliStatus.detail || '';
         }
       } catch (err) {
         const el = document.getElementById('process-snapshot');
@@ -86,9 +100,34 @@ HTML = """
     select { padding:9px 12px; border:1px solid #bbb; border-radius:8px; }
     input { padding:8px 10px; border:1px solid #bbb; border-radius:8px; max-width:80px; }
     pre { white-space:pre-wrap; word-break:break-word; background:#111; color:#eee; padding:12px; border-radius:8px; font-size:12px; }
+    .cli-card { padding:20px; }
+    .cli-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+    .cli-status { display:flex; align-items:center; gap:16px; margin:0; }
+    .cli-mascot { width:72px; height:72px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#263238; color:#fff; font-size:38px; font-weight:800; font-family:Consolas, monospace; flex:0 0 auto; }
+    .cli-mascot.running { background:#0f766e; }
+    .cli-mascot.starting { background:#1d4ed8; }
+    .cli-mascot.warning { background:#b45309; }
+    .cli-mascot.idle { background:#475569; }
+    .cli-status-title { font-size:22px; font-weight:bold; }
+    .cli-status-detail { margin-top:4px; color:#555; font-size:14px; }
+    .cli-popout { color:#0f172a; background:#e2e8f0; padding:10px 14px; border-radius:8px; text-decoration:none; font-weight:bold; }
+    .terminal-window { background:#0c0c0c; border:1px solid #2b2b2b; border-radius:8px; overflow:hidden; box-shadow:inset 0 1px 0 rgba(255,255,255,.06); }
+    .terminal-titlebar { display:flex; align-items:center; gap:8px; padding:10px 12px; background:#202020; color:#d6d6d6; font-family:Consolas, monospace; font-size:13px; }
+    .terminal-dot { width:11px; height:11px; border-radius:50%; background:#555; display:inline-block; }
+    .terminal-dot.red { background:#d75f56; }
+    .terminal-dot.yellow { background:#d7ba7d; }
+    .terminal-dot.green { background:#4ec9b0; }
+    .terminal-title { margin-left:6px; }
+    .cli-process { min-height:82vh; max-height:82vh; overflow:auto; margin:0; border-radius:0; background:#0c0c0c; color:#dcdcdc; font-family:Consolas, "Courier New", monospace; font-size:14px; line-height:1.45; padding:18px; word-break:normal; overflow-wrap:anywhere; }
     table { width:100%; border-collapse:collapse; font-size:14px; }
     th, td { border-bottom:1px solid #ddd; text-align:left; padding:8px; vertical-align:top; }
     .mono { font-family: Consolas, monospace; }
+    @media (max-width: 700px) {
+      body { margin:12px; }
+      .cli-status { align-items:flex-start; }
+      .cli-mascot { width:60px; height:60px; font-size:32px; }
+      .cli-process { min-height:72vh; max-height:72vh; font-size:12px; padding:14px; }
+    }
   </style>
 </head>
 <body>
@@ -121,10 +160,29 @@ HTML = """
     </form>
   </div>
 
-  <div class="card" style="margin-top:16px;">
-    <h3>CLI実行状況</h3>
+  <div class="card cli-card" style="margin-top:16px;">
+    <div class="cli-toolbar">
+      <div>
+        <h3>CLI実行状況</h3>
+        <div class="cli-status">
+          <div id="cli-mascot" class="cli-mascot {{ cli_status.state_class }}">{{ cli_status.mascot }}</div>
+          <div>
+            <div id="cli-status-title" class="cli-status-title">{{ cli_status.title }}</div>
+            <div id="cli-status-detail" class="cli-status-detail">{{ cli_status.detail }}</div>
+          </div>
+        </div>
+      </div>
+      <a class="cli-popout" href="/cli-terminal" target="_blank" rel="noopener">大きく表示</a>
+    </div>
     <div id="live-pids" class="small">DashboardジョブPID={{ running_pid or "なし" }} / Claude PID={{ claude_pid or "なし" }}</div>
-    <pre id="process-snapshot">{{ process_snapshot }}</pre>
+    <div class="small">別ターミナル起動={{ terminal_launch_summary }}</div>
+    <div class="terminal-window">
+      <div class="terminal-titlebar">
+        <span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span>
+        <span class="terminal-title">ClaudeCode DevOS Terminal</span>
+      </div>
+      <pre id="process-snapshot" class="cli-process">{{ terminal_text }}</pre>
+    </div>
   </div>
 
   <div class="grid">
@@ -327,6 +385,97 @@ HTML = """
 </html>
 """
 
+CLI_TERMINAL_HTML = """
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>ClaudeCode DevOS CLI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    async function refreshTerminal() {
+      try {
+        const res = await fetch('/api/logs', {cache: 'no-store'});
+        const data = await res.json();
+        const outputEl = document.getElementById('terminal-output');
+        if (outputEl) {
+          outputEl.textContent = data.terminal_text || data.process_snapshot || '';
+        }
+        const cliStatus = data.cli_status || {};
+        const mascotEl = document.getElementById('cli-mascot');
+        const titleEl = document.getElementById('cli-status-title');
+        const detailEl = document.getElementById('cli-status-detail');
+        const pidEl = document.getElementById('live-pids');
+        if (mascotEl) {
+          mascotEl.className = `cli-mascot ${cliStatus.state_class || 'idle'}`;
+          mascotEl.textContent = cliStatus.mascot || 'C';
+        }
+        if (titleEl) {
+          titleEl.textContent = cliStatus.title || 'Claude 待機中';
+        }
+        if (detailEl) {
+          detailEl.textContent = cliStatus.detail || '';
+        }
+        if (pidEl) {
+          pidEl.textContent = `DashboardジョブPID=${data.running_pid || 'なし'} / Claude PID=${data.claude_pid || 'なし'}`;
+        }
+      } catch (err) {
+        const outputEl = document.getElementById('terminal-output');
+        if (outputEl) {
+          outputEl.textContent = `ログ更新に失敗しました: ${err}`;
+        }
+      }
+    }
+    window.addEventListener('load', () => {
+      refreshTerminal();
+      setInterval(refreshTerminal, 2000);
+    });
+  </script>
+  <style>
+    html, body { height:100%; margin:0; background:#0c0c0c; color:#dcdcdc; font-family:Arial, sans-serif; }
+    body { display:flex; flex-direction:column; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:14px 18px; background:#171717; border-bottom:1px solid #2b2b2b; flex-wrap:wrap; }
+    .cli-status { display:flex; align-items:center; gap:16px; }
+    .cli-mascot { width:76px; height:76px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#263238; color:#fff; font-size:40px; font-weight:800; font-family:Consolas, monospace; flex:0 0 auto; }
+    .cli-mascot.running { background:#0f766e; }
+    .cli-mascot.starting { background:#1d4ed8; }
+    .cli-mascot.warning { background:#b45309; }
+    .cli-mascot.idle { background:#475569; }
+    .cli-status-title { color:#f8fafc; font-size:24px; font-weight:bold; }
+    .cli-status-detail, .small { color:#cbd5e1; font-size:14px; }
+    .terminal-window { flex:1; display:flex; flex-direction:column; min-height:0; }
+    .terminal-titlebar { display:flex; align-items:center; gap:8px; padding:10px 14px; background:#202020; color:#d6d6d6; font-family:Consolas, monospace; font-size:13px; }
+    .terminal-dot { width:11px; height:11px; border-radius:50%; background:#555; display:inline-block; }
+    .terminal-dot.red { background:#d75f56; }
+    .terminal-dot.yellow { background:#d7ba7d; }
+    .terminal-dot.green { background:#4ec9b0; }
+    .terminal-title { margin-left:6px; }
+    pre { flex:1; margin:0; padding:20px; overflow:auto; white-space:pre-wrap; word-break:normal; overflow-wrap:anywhere; background:#0c0c0c; color:#dcdcdc; font-family:Consolas, "Courier New", monospace; font-size:15px; line-height:1.45; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="cli-status">
+      <div id="cli-mascot" class="cli-mascot {{ cli_status.state_class }}">{{ cli_status.mascot }}</div>
+      <div>
+        <div id="cli-status-title" class="cli-status-title">{{ cli_status.title }}</div>
+        <div id="cli-status-detail" class="cli-status-detail">{{ cli_status.detail }}</div>
+        <div id="live-pids" class="small">DashboardジョブPID={{ running_pid or "なし" }} / Claude PID={{ claude_pid or "なし" }}</div>
+      </div>
+    </div>
+    <div class="small">2秒ごとに更新</div>
+  </div>
+  <div class="terminal-window">
+    <div class="terminal-titlebar">
+      <span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span>
+      <span class="terminal-title">ClaudeCode DevOS Terminal</span>
+    </div>
+    <pre id="terminal-output">{{ terminal_text }}</pre>
+  </div>
+</body>
+</html>
+"""
+
 
 def load_json(path, default):
     if path.exists():
@@ -357,16 +506,71 @@ def pid_from_file(path):
     return pid or None
 
 
+def pid_is_running(pid):
+    if not pid:
+        return False
+    try:
+        os.kill(int(pid), 0)
+        return True
+    except (ProcessLookupError, ValueError):
+        return False
+    except PermissionError:
+        return True
+
+
+def cli_status(state):
+    claude = state.get("claude", {})
+    system = state.get("system", {})
+    running_pid = running_action()
+    claude_pid = pid_from_file(DEVOS_HOME / "runtime/pids/claude.pid")
+    claude_pid_running = pid_is_running(claude_pid)
+    claude_state = claude.get("status", "")
+    system_state = system.get("status", "")
+
+    if claude_pid_running:
+        return {
+            "mascot": "C",
+            "state_class": "running",
+            "title": "Claude 実行中",
+            "detail": f"Claude PID={claude_pid} を監視しています。",
+        }
+    if running_pid:
+        return {
+            "mascot": "C",
+            "state_class": "starting",
+            "title": "Dashboardジョブ実行中",
+            "detail": f"Dashboardジョブ PID={running_pid} が Claude 起動または前処理を実行しています。",
+        }
+    if claude_state in {"starting", "running"} or system_state == "running":
+        return {
+            "mascot": "C",
+            "state_class": "warning",
+            "title": "実行状態を確認中",
+            "detail": f"state.json は claude={claude_state or '不明'} / system={system_state or '不明'} です。PIDまたはps出力を確認してください。",
+        }
+    return {
+        "mascot": "C",
+        "state_class": "idle",
+        "title": "Claude 待機中",
+        "detail": f"state.json は claude={claude_state or '不明'} / system={system_state or '不明'} です。",
+    }
+
+
 def process_snapshot():
+    devos_home = str(DEVOS_HOME)
+    devos_home_resolved = str(DEVOS_HOME.resolve()) if DEVOS_HOME.exists() else devos_home
     keywords = (
-        "/opt/claudecode-devos",
+        devos_home,
+        devos_home_resolved,
         "/home/kensan/.local/bin/claude",
         "/home/kensan/.local/share/claude/versions",
         "claude --dangerously",
         "claude-safe",
-        "run-scheduled",
-        "run-auto",
-        "dashboard-action",
+        "run-scheduled-project.sh",
+        "run-auto-dev.sh",
+        "run-auto-dev-worktree.sh",
+        "repair_ci_worktree.sh",
+        "dashboard-actions.log",
     )
     excludes = ("claude-mem", ".claude/plugins", ".claude-mem", "chroma-mcp")
     try:
@@ -388,10 +592,45 @@ def process_snapshot():
         if any(keyword in line for keyword in keywords)
         and not any(exclude in line for exclude in excludes)
         and "gunicorn" not in line
+        and "ps -eo pid,ppid,stat,etime,cmd" not in line
     ]
     if not picked:
         return "関連プロセスはありません。"
     return "\n".join([header, *picked[-40:]])
+
+
+def terminal_text(state=None):
+    state = state or load_json(STATE, {})
+    status = cli_status(state)
+    parts = [
+        "ClaudeCode DevOS CLI",
+        f"Status: {status['title']}",
+        status["detail"],
+        f"DashboardジョブPID={running_action() or 'なし'} / Claude PID={pid_from_file(DEVOS_HOME / 'runtime/pids/claude.pid') or 'なし'}",
+        f"Terminal launcher: {terminal_launch_summary()}",
+        "",
+        "[Processes]",
+        process_snapshot(),
+        "",
+        "[Claude実行ログ]",
+        tail(CLAUDE_SAFE_LOG, 120) or "ログはまだありません。",
+        "",
+        "[開発実行ログ]",
+        tail(DEVELOPMENT_LOG, 80) or "ログはまだありません。",
+        "",
+        "[プロジェクトランナーログ]",
+        tail(PROJECT_RUNNER_LOG, 80) or "ログはまだありません。",
+    ]
+    return "\n".join(parts)
+
+
+def terminal_launch_summary():
+    config = terminal_launch_config()
+    if not config:
+        return "未設定: Windows SSH/WSL/GUI DISPLAY が見つからないためバックグラウンド実行へフォールバックします。"
+    if config["kind"] == "windows_ssh":
+        return f"Windows SSH: {config['windows_ssh_target']} -> {config['linux_ssh_target']}"
+    return f"{config['kind']}: {config.get('source') or config.get('command')}"
 
 
 ACTION_LABELS = {
@@ -463,7 +702,10 @@ def index():
         status_labels=STATUS_LABELS,
         running_pid=running_action(),
         claude_pid=pid_from_file(DEVOS_HOME / "runtime/pids/claude.pid"),
+        cli_status=cli_status(state),
+        terminal_launch_summary=terminal_launch_summary(),
         process_snapshot=process_snapshot(),
+        terminal_text=terminal_text(state),
         notice=request.args.get("notice", ""),
         decision_log=tail(DECISION_LOG),
         orchestrator_log=tail(ORCH_LOG),
@@ -494,6 +736,18 @@ def control():
         else:
             notice = "クールダウンを設定しました。"
     return redirect(url_for("index", notice=notice))
+
+
+@app.route("/cli-terminal")
+def cli_terminal():
+    state = load_json(STATE, {})
+    return render_template_string(
+        CLI_TERMINAL_HTML,
+        cli_status=cli_status(state),
+        running_pid=running_action(),
+        claude_pid=pid_from_file(DEVOS_HOME / "runtime/pids/claude.pid"),
+        terminal_text=terminal_text(state),
+    )
 
 
 @app.route("/select-project", methods=["POST"])
@@ -543,14 +797,19 @@ def api_strategy():
 
 @app.route("/api/logs")
 def api_logs():
+    state = load_json(STATE, {})
     return jsonify({
         "claude_safe": tail(CLAUDE_SAFE_LOG, 100),
         "project_runner": tail(PROJECT_RUNNER_LOG, 100),
         "development": tail(DEVELOPMENT_LOG, 100),
         "dashboard_actions": tail(DASHBOARD_ACTION_LOG, 100),
         "process_snapshot": process_snapshot(),
+        "terminal_text": terminal_text(state),
         "running_pid": running_action(),
         "claude_pid": pid_from_file(DEVOS_HOME / "runtime/pids/claude.pid"),
+        "cli_status": cli_status(state),
+        "terminal_launch": terminal_launch_config(),
+        "terminal_launch_summary": terminal_launch_summary(),
     })
 
 

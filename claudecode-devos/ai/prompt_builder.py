@@ -12,6 +12,7 @@ ISSUE = DEVOS_HOME / "runtime/issues/selected_issue.json"
 CI_SUMMARY = DEVOS_HOME / "runtime/ci/last_failure_summary.txt"
 OUT = DEVOS_HOME / "runtime/prompts/current_prompt.md"
 EVOLUTION_PROMPT = DEVOS_HOME / "runtime/prompts/evolution_instructions.md"
+SESSION_PROMPT_TEMPLATE = DEVOS_HOME / "templates/CLAUDEOS_SESSION_PROMPT.md"
 DOCS_DIR = DEVOS_HOME / "docs"
 DOCS_MAX_BYTES = int(os.environ.get("PROMPT_DOCS_MAX_BYTES", "12000"))
 
@@ -41,6 +42,12 @@ def docs_context():
     return "\n".join(chunks) if chunks else "No Docs context selected."
 
 
+def session_prompt_template():
+    if SESSION_PROMPT_TEMPLATE.exists():
+        return SESSION_PROMPT_TEMPLATE.read_text(encoding="utf-8").strip()
+    return "# ClaudeOS v7.1 セッション開始"
+
+
 def main():
     state = json.loads(STATE.read_text(encoding="utf-8"))
     issue = read_json(ISSUE)
@@ -51,50 +58,52 @@ def main():
     resources = state.get("resources", {})
     usage = state.get("usage", {})
 
-    prompt = f"""# Claude Auto Prompt
+    prompt = f"""{session_prompt_template()}
 
-## Time
+## 24. 現在の実行コンテキスト
+
+### 時刻
 {datetime.now():%Y-%m-%d %H:%M:%S}
 
-## Mode
+### モード
 {decision.get('next_action')}
 
-## System State
-- decision_reason: {decision.get('reason')}
-- current_mode: {decision.get('current_mode')}
-- memory_free_mb: {resources.get('memory_free_mb')}
-- swap_used_mb: {resources.get('swap_used_mb')}
-- cpu_percent: {resources.get('cpu_percent')}
-- disk_used_percent: {resources.get('disk_used_percent')}
-- ci_status: {ci.get('last_run_status')}
-- repair_attempt_count: {ci.get('repair_attempt_count')}
-- daily_seconds_used: {usage.get('daily_seconds_used')}
-- weekly_seconds_used: {usage.get('weekly_seconds_used')}
+### システム状態
+- 判定理由: {decision.get('reason')}
+- 現在モード: {decision.get('current_mode')}
+- 空きメモリMB: {resources.get('memory_free_mb')}
+- swap使用MB: {resources.get('swap_used_mb')}
+- CPU使用率: {resources.get('cpu_percent')}
+- ディスク使用率: {resources.get('disk_used_percent')}
+- CI状態: {ci.get('last_run_status')}
+- 修復試行回数: {ci.get('repair_attempt_count')}
+- 本日使用秒数: {usage.get('daily_seconds_used')}
+- 今週使用秒数: {usage.get('weekly_seconds_used')}
 
-## Current Issue
+### 現在のIssue
 ```json
 {json.dumps(issue, ensure_ascii=False, indent=2)}
 ```
 
-## CI Failure Summary
+### CI失敗サマリー
 ```text
 {ci_summary}
 ```
 
-## Docs Context
+### Docsコンテキスト
 {docs_context()}
 
-## Evolution Instructions
+### Evolution指示
 {evolution_prompt}
 
-## Instructions
-- Resolve the selected issue or the current CI failure, depending on Mode.
-- Make the smallest safe change.
-- Run focused tests or validation when available.
-- Update relevant Docs when behavior or operations change.
-- Commit only relevant changes.
-- Do not push to the base branch directly.
-- If resource pressure exists, prefer lightweight checks.
+### 追加指示
+- モードに応じて、選択されたIssueまたは現在のCI失敗を解決してください。
+- 最小で安全な変更を優先してください。
+- 利用可能なら、焦点を絞ったテストまたは検証を実行してください。
+- 振る舞いまたは運用が変わる場合は、関連Docsを更新してください。
+- 関連する変更だけをcommitしてください。
+- base branchへ直接pushしないでください。
+- リソース圧迫がある場合は、軽量な確認を優先してください。
 """
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

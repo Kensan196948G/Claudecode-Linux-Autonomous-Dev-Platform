@@ -63,9 +63,17 @@ printf '%s [RUNNER] usage check: %s\n' "$(date '+%F %T')" "$USAGE_CHECK_OUTPUT" 
 START_TIME="$(date +%s)"
 WORKTREE_ENABLED_STATE="$("$DEVOS_HOME/ops/state_manager.py" get worktree.enabled | tr -d '"')"
 if [[ "$WORKTREE_ENABLED" == "true" && "$WORKTREE_ENABLED_STATE" != "false" && -d "$PROJECT_REPO/.git" ]]; then
-  "$DEVOS_HOME/bin/run-auto-dev-worktree.sh" >> "$LOG_FILE" 2>&1 || true
+  if [[ "${DEVOS_CLAUDE_FOREGROUND:-false}" == "true" ]]; then
+    "$DEVOS_HOME/bin/run-auto-dev-worktree.sh" || true
+  else
+    "$DEVOS_HOME/bin/run-auto-dev-worktree.sh" >> "$LOG_FILE" 2>&1 || true
+  fi
 else
-  AUTO_DEV_REPO="$PROJECT_REPO" "$DEVOS_HOME/bin/run-auto-dev.sh" >> "$LOG_FILE" 2>&1 || true
+  if [[ "${DEVOS_CLAUDE_FOREGROUND:-false}" == "true" ]]; then
+    AUTO_DEV_REPO="$PROJECT_REPO" "$DEVOS_HOME/bin/run-auto-dev.sh" || true
+  else
+    AUTO_DEV_REPO="$PROJECT_REPO" "$DEVOS_HOME/bin/run-auto-dev.sh" >> "$LOG_FILE" 2>&1 || true
+  fi
 fi
 END_TIME="$(date +%s)"
 DURATION="$((END_TIME - START_TIME))"
