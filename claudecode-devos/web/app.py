@@ -18,6 +18,10 @@ DECISION_LOG = DEVOS_HOME / "runtime/decisions/decision.log"
 ORCH_LOG = DEVOS_HOME / "runtime/logs/orchestrator.log"
 RECOVERY_LOG = DEVOS_HOME / "runtime/logs/recovery.log"
 AGENT_EVENTS = DEVOS_HOME / "runtime/agent_logs/agent_events.log"
+CLAUDE_SAFE_LOG = DEVOS_HOME / "runtime/logs/claude-safe.log"
+PROJECT_RUNNER_LOG = DEVOS_HOME / "runtime/logs/project-runner.log"
+DEVELOPMENT_LOG = DEVOS_HOME / "runtime/agent_logs/development.log"
+DASHBOARD_ACTION_LOG = DEVOS_HOME / "runtime/logs/dashboard-actions.log"
 CLUSTER_STATE = DEVOS_HOME / "cluster/controller/cluster_state.json"
 STRATEGY_SCORES = DEVOS_HOME / "strategy/scores/latest_scores.json"
 
@@ -76,11 +80,17 @@ HTML = """
     <form method="post" action="/select-project" class="actions">
       <select name="repo_path">
         {% for project in project_repositories %}
-        <option value="{{ project.repository }}" {% if project.repository == selected.repository %}selected{% endif %}>{{ project.name }} - {{ project.repository }}</option>
+        <option value="{{ project.repository }}" {% if project.repository == selected.repository %}selected{% endif %}>{{ project.name }}</option>
         {% endfor %}
       </select>
       <button class="btn btn-dev" type="submit">プロジェクトを選択</button>
     </form>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h3>CLI実行状況</h3>
+    <div class="small">DashboardジョブPID={{ running_pid or "なし" }} / Claude PID={{ claude_pid or "なし" }}</div>
+    <pre>{{ process_snapshot }}</pre>
   </div>
 
   <div class="grid">
@@ -257,6 +267,28 @@ HTML = """
     <h3>復旧ログ</h3>
     <pre>{{ recovery_log }}</pre>
   </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Claude実行ログ</h3>
+      <pre>{{ claude_safe_log }}</pre>
+    </div>
+    <div class="card">
+      <h3>開発実行ログ</h3>
+      <pre>{{ development_log }}</pre>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>プロジェクトランナーログ</h3>
+      <pre>{{ project_runner_log }}</pre>
+    </div>
+    <div class="card">
+      <h3>Dashboard操作ログ</h3>
+      <pre>{{ dashboard_action_log }}</pre>
+    </div>
+  </div>
 </body>
 </html>
 """
@@ -282,6 +314,50 @@ def pretty(data):
 def touch_dashboard():
     updater = DEVOS_HOME / "web/update_dashboard_state.py"
     subprocess.run([str(updater)], check=False)
+
+
+def pid_from_file(path):
+    if not path.exists():
+        return None
+    pid = path.read_text(encoding="utf-8").strip()
+    return pid or None
+
+
+def process_snapshot():
+    keywords = (
+        "/opt/claudecode-devos",
+        "/home/kensan/.local/bin/claude",
+        "/home/kensan/.local/share/claude/versions",
+        "claude --dangerously",
+        "claude-safe",
+        "run-scheduled",
+        "run-auto",
+        "dashboard-action",
+    )
+    excludes = ("claude-mem", ".claude/plugins", ".claude-mem", "chroma-mcp")
+    try:
+        proc = subprocess.run(
+            ["ps", "-eo", "pid,ppid,stat,etime,cmd"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return f"プロセス取得に失敗しました: {exc}"
+    lines = proc.stdout.splitlines()
+    if not lines:
+        return "関連プロセスはありません。"
+    header, body = lines[0], lines[1:]
+    picked = [
+        line for line in body
+        if any(keyword in line for keyword in keywords)
+        and not any(exclude in line for exclude in excludes)
+        and "gunicorn" not in line
+    ]
+    if not picked:
+        return "関連プロセスはありません。"
+    return "\n".join([header, *picked[-40:]])
 
 
 ACTION_LABELS = {
@@ -352,11 +428,17 @@ def index():
         priority_labels=PRIORITY_LABELS,
         status_labels=STATUS_LABELS,
         running_pid=running_action(),
+        claude_pid=pid_from_file(DEVOS_HOME / "runtime/pids/claude.pid"),
+        process_snapshot=process_snapshot(),
         notice=request.args.get("notice", ""),
         decision_log=tail(DECISION_LOG),
         orchestrator_log=tail(ORCH_LOG),
         recovery_log=tail(RECOVERY_LOG),
         agent_events=tail(AGENT_EVENTS),
+        claude_safe_log=tail(CLAUDE_SAFE_LOG, 100),
+        project_runner_log=tail(PROJECT_RUNNER_LOG, 100),
+        development_log=tail(DEVELOPMENT_LOG, 100),
+        dashboard_action_log=tail(DASHBOARD_ACTION_LOG, 100),
     )
 
 
@@ -423,6 +505,17 @@ def api_cluster():
 @app.route("/api/strategy")
 def api_strategy():
     return jsonify(load_json(STRATEGY_SCORES, {"scores": []}))
+
+
+@app.route("/api/logs")
+def api_logs():
+    return jsonify({
+        "claude_safe": tail(CLAUDE_SAFE_LOG, 100),
+        "project_runner": tail(PROJECT_RUNNER_LOG, 100),
+        "development": tail(DEVELOPMENT_LOG, 100),
+        "dashboard_actions": tail(DASHBOARD_ACTION_LOG, 100),
+        "process_snapshot": process_snapshot(),
+    })
 
 
 if __name__ == "__main__":
