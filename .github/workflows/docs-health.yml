@@ -1,0 +1,40 @@
+name: 📚 Docs Health
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs-health:
+    name: 🗂️ Validate README and Docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔎 Required docs exist
+        run: |
+          test -f README.md
+          test -f claudecode-devos/README.md
+          test -f claudecode-devos/docs/00_governance/operations_policy.md
+          test -f claudecode-devos/docs/03_operations/runtime_rules.md
+          test -f claudecode-devos/docs/06_decisions/decision-log.md
+          test -f docs/github/projects-and-actions.md
+
+      - name: 🧭 Mermaid diagrams are present
+        run: |
+          count="$(grep -c '```mermaid' README.md)"
+          test "$count" -ge 5
+
+      - name: 🏷️ GitHub Actions section exists
+        run: |
+          grep -q "GitHub Actions" README.md
+          grep -q "GitHub Projects" README.md
+

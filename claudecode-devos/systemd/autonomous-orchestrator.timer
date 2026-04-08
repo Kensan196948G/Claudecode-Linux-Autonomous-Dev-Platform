@@ -1,0 +1,11 @@
+[Unit]
+Description=Run ClaudeCode DevOS Autonomous Orchestrator every five minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Persistent=true
+Unit=autonomous-orchestrator.service
+
+[Install]
+WantedBy=timers.target

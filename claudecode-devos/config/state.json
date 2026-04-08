@@ -1,0 +1,172 @@
+{
+  "system": {
+    "status": "idle",
+    "mode": "safe",
+    "health": "unknown",
+    "last_bootstrap": null,
+    "last_session_start": null,
+    "last_session_end": null,
+    "last_error": null,
+    "recovery_count": 0,
+    "last_recovery": null
+  },
+  "limits": {
+    "daily_runtime_hours": 5,
+    "weekly_reset": "Friday 13:00",
+    "project_term_days": 183
+  },
+  "usage": {
+    "daily_seconds_used": 0,
+    "daily_limit_seconds": 18000,
+    "weekly_seconds_used": 0,
+    "weekly_limit_seconds": 90000,
+    "last_reset_daily": null,
+    "last_reset_weekly": null
+  },
+  "resources": {
+    "memory_free_mb": null,
+    "swap_used_mb": null,
+    "cpu_percent": null,
+    "loadavg_1m": null,
+    "disk_used_percent": null
+  },
+  "claude": {
+    "status": "stopped",
+    "last_pid": null,
+    "last_command": "claude --dangerously-skip-permissions",
+    "dangerously_skip_permissions": true
+  },
+  "projects": {
+    "active_project": null,
+    "registered_count": 2,
+    "last_project_switch": null
+  },
+  "github": {
+    "repo": null,
+    "base_branch": "main",
+    "current_issue": null,
+    "current_issue_title": null,
+    "current_branch": null,
+    "last_pr": null,
+    "ci_status": null,
+    "auto_merge_enabled": false,
+    "last_sync": null,
+    "last_error": null
+  },
+  "decision": {
+    "current_mode": "safe",
+    "next_action": "idle",
+    "reason": null,
+    "cooldown_until": null,
+    "last_decision_at": null
+  },
+  "ci": {
+    "enabled": true,
+    "repo_path": "/home/kensan/Projects/sample-project-01",
+    "default_branch": "main",
+    "last_checked_at": null,
+    "last_run_status": null,
+    "last_run_id": null,
+    "last_failure_summary": null,
+    "repair_attempt_count": 0,
+    "repair_attempt_limit": 3,
+    "last_repair_at": null,
+    "auto_merge_enabled": false,
+    "merge_policy": "ci-green-only",
+    "last_repair_branch": null,
+    "last_repair_pr": null
+  },
+  "risk": {
+    "memory_pressure": false,
+    "cpu_pressure": false,
+    "disk_pressure": false,
+    "ci_unstable": false
+  },
+  "ai": {
+    "selected_issue_file": null,
+    "current_prompt_file": null,
+    "last_prompt_built_at": null,
+    "last_agent_log_at": null,
+    "decision_log": []
+  },
+  "ai_decision_log": [],
+  "notifications": {
+    "last_sent": "",
+    "errors": 0,
+    "last_error": null,
+    "last_event_type": null
+  },
+  "reports": {
+    "last_generated_at": null,
+    "last_report_file": null
+  },
+  "evolution": {
+    "enabled": true,
+    "mode": "normal",
+    "task_strategy": "standard",
+    "last_cycle_at": null,
+    "last_optimized_at": null,
+    "last_prompt_evolved_at": null,
+    "last_metrics": null,
+    "last_decision": null,
+    "prompt_fragment_file": null,
+    "success_rate_threshold": 0.8,
+    "fail_rate_threshold": 0.3,
+    "slow_avg_time_seconds": 60
+  },
+  "scheduler": {
+    "mode": "single",
+    "max_parallel_projects": 1,
+    "selection_policy": "weighted-priority",
+    "last_selected_project": null,
+    "last_schedule_at": null
+  },
+  "projects_runtime": {
+    "active_projects": [],
+    "queued_projects": [],
+    "completed_today": [],
+    "blocked_projects": []
+  },
+  "dashboard": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 5050,
+    "last_refresh_at": "2026-04-08 19:02:46"
+  },
+  "control": {
+    "manual_override": false,
+    "manual_action": null,
+    "manual_reason": null,
+    "manual_project_id": null,
+    "manual_requested_at": null,
+    "manual_requested_by": "local-dashboard"
+  },
+  "worktree": {
+    "enabled": true,
+    "base_dir": "/opt/claudecode-devos/runtime/worktrees",
+    "current_path": null,
+    "current_branch": null,
+    "current_type": null
+  },
+  "history": {
+    "last_project_runs": [],
+    "last_ci_repairs": [],
+    "last_manual_actions": []
+  },
+  "strategy": {
+    "enabled": true,
+    "mode": "balanced",
+    "last_scored_at": null,
+    "current_top_project": null,
+    "selection_reason": null,
+    "last_dropped_projects": [],
+    "weights": {
+      "roi": 0.3,
+      "strategic_fit": 0.2,
+      "urgency": 0.15,
+      "reuse": 0.15,
+      "stability": 0.1,
+      "interest": 0.1
+    }
+  }
+}

@@ -1,0 +1,9 @@
+[Unit]
+Description=ClaudeCode DevOS Evolution Engine
+
+[Service]
+Type=oneshot
+User=kensan
+WorkingDirectory=/opt/claudecode-devos
+Environment=DEVOS_HOME=/opt/claudecode-devos
+ExecStart=/usr/bin/python3 /opt/claudecode-devos/core/evolution_loop.py

@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClaudeCode DevOS state.json",
+  "type": "object",
+  "required": [
+    "system",
+    "limits",
+    "usage",
+    "resources",
+    "claude",
+    "projects",
+    "github",
+    "decision",
+    "ci",
+    "risk",
+    "scheduler",
+    "projects_runtime",
+    "dashboard",
+    "control",
+    "worktree",
+    "history",
+    "strategy"
+  ],
+  "properties": {
+    "system": {
+      "type": "object",
+      "required": ["status", "mode", "health", "recovery_count"],
+      "properties": {
+        "status": {"type": "string"},
+        "mode": {"type": "string"},
+        "health": {"type": "string"},
+        "last_error": {"type": ["string", "null"]},
+        "recovery_count": {"type": "integer"}
+      }
+    },
+    "usage": {
+      "type": "object",
+      "required": ["daily_seconds_used", "daily_limit_seconds", "weekly_seconds_used", "weekly_limit_seconds"],
+      "properties": {
+        "daily_seconds_used": {"type": "integer", "minimum": 0},
+        "daily_limit_seconds": {"type": "integer", "minimum": 1},
+        "weekly_seconds_used": {"type": "integer", "minimum": 0},
+        "weekly_limit_seconds": {"type": "integer", "minimum": 1}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "required": ["current_mode", "next_action"],
+      "properties": {
+        "current_mode": {"type": "string"},
+        "next_action": {"enum": ["idle", "develop", "verify", "repair_ci", "cooldown", "suspend"]},
+        "reason": {"type": ["string", "null"]}
+      }
+    },
+    "ci": {
+      "type": "object",
+      "required": ["repair_attempt_count", "repair_attempt_limit", "auto_merge_enabled", "merge_policy"],
+      "properties": {
+        "repair_attempt_count": {"type": "integer", "minimum": 0},
+        "repair_attempt_limit": {"type": "integer", "minimum": 1, "maximum": 10},
+        "auto_merge_enabled": {"type": "boolean"},
+        "merge_policy": {"type": "string"}
+      }
+    },
+    "github": {
+      "type": "object",
+      "properties": {
+        "auto_merge_enabled": {"type": "boolean"},
+        "base_branch": {"type": "string"}
+      }
+    },
+    "control": {
+      "type": "object",
+      "required": ["manual_override"],
+      "properties": {
+        "manual_override": {"type": "boolean"},
+        "manual_action": {"type": ["string", "null"]}
+      }
+    },
+    "strategy": {
+      "type": "object",
+      "required": ["enabled", "mode", "weights"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "mode": {"enum": ["balanced", "growth", "safe", "finish-fast"]},
+        "current_top_project": {"type": ["string", "null"]},
+        "weights": {"type": "object"}
+      }
+    }
+  }
+}

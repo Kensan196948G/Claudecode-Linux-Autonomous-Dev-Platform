@@ -1,0 +1,65 @@
+{
+  "cluster": {
+    "name": "ClaudeOS-Cluster",
+    "mode": "active-passive",
+    "max_parallel_jobs": 2,
+    "scheduler_policy": "least-loaded",
+    "last_dispatch_at": null
+  },
+  "controller": {
+    "hostname": "controller-node",
+    "status": "healthy"
+  },
+  "controllers": [
+    {
+      "id": "controller-A",
+      "hostname": "controller-A",
+      "enabled": true,
+      "status": "active"
+    },
+    {
+      "id": "controller-B",
+      "hostname": "controller-B",
+      "enabled": true,
+      "status": "standby"
+    }
+  ],
+  "workers": [
+    {
+      "id": "worker-01",
+      "hostname": "worker-01",
+      "ip": "192.168.0.101",
+      "status": "idle",
+      "enabled": true,
+      "drain": false,
+      "last_heartbeat": null,
+      "memory_free_mb": null,
+      "cpu_percent": null,
+      "disk_used_percent": null,
+      "current_jobs": 0,
+      "max_jobs": 1,
+      "tags": ["general", "repair"]
+    },
+    {
+      "id": "worker-02",
+      "hostname": "worker-02",
+      "ip": "192.168.0.102",
+      "status": "idle",
+      "enabled": true,
+      "drain": false,
+      "last_heartbeat": null,
+      "memory_free_mb": null,
+      "cpu_percent": null,
+      "disk_used_percent": null,
+      "current_jobs": 0,
+      "max_jobs": 1,
+      "tags": ["general", "develop"]
+    }
+  ],
+  "jobs": {
+    "queued": [],
+    "running": [],
+    "completed": [],
+    "failed": []
+  }
+}

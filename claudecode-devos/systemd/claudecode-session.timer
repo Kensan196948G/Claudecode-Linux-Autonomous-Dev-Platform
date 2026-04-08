@@ -1,0 +1,10 @@
+[Unit]
+Description=Run ClaudeCode DevOS session daily
+
+[Timer]
+OnCalendar=*-*-* 08:00:00
+Persistent=true
+Unit=claudecode-session.service
+
+[Install]
+WantedBy=timers.target

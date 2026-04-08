@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ClaudeCode DevOS Agent Event",
+  "type": "object",
+  "required": ["timestamp", "agent", "action", "result", "duration_sec"],
+  "properties": {
+    "timestamp": {"type": "string", "format": "date-time"},
+    "agent": {"type": "string"},
+    "action": {"type": "string"},
+    "issue": {"type": ["string", "null"]},
+    "project_id": {"type": ["string", "null"]},
+    "result": {"enum": ["success", "failure", "skipped", "running", "unknown"]},
+    "duration_sec": {"type": "number", "minimum": 0},
+    "detail": {"type": "object"}
+  }
+}

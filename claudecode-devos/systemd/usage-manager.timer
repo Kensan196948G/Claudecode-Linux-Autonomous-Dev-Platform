@@ -1,0 +1,11 @@
+[Unit]
+Description=Run ClaudeCode DevOS Usage Manager every five minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+Persistent=true
+Unit=usage-manager.service
+
+[Install]
+WantedBy=timers.target

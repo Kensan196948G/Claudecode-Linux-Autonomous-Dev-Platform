@@ -1,0 +1,46 @@
+name: 🧪 CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: 🛡️ Validate Bash, Python, and JSON
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐚 Install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: 🐚 Shellcheck
+        run: |
+          shellcheck claudecode-devos/bin/*.sh claudecode-devos/ops/*.sh claudecode-devos/install.sh
+
+      - name: 🐍 Python syntax check
+        run: |
+          python3 -m py_compile \
+            claudecode-devos/ops/state_manager.py \
+            claudecode-devos/ops/metrics_snapshot.py \
+            claudecode-devos/ops/memory_guard.py
+
+      - name: 🧾 JSON validation
+        run: |
+          python3 -m json.tool claudecode-devos/config/state.json >/dev/null
+          python3 -m json.tool claudecode-devos/config/projects.json >/dev/null
+
+      - name: 🧠 Local state manager smoke test
+        run: |
+          DEVOS_HOME="$PWD/claudecode-devos" python3 claudecode-devos/ops/state_manager.py get system.status
+

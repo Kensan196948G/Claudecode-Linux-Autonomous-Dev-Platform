@@ -1,0 +1,16 @@
+[Unit]
+Description=ClaudeCode DevOS GitHub Automation Loop
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kensan
+WorkingDirectory=/opt/claudecode-devos
+Environment=DEVOS_HOME=/opt/claudecode-devos
+ExecStart=/opt/claudecode-devos/github/full_loop.sh
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

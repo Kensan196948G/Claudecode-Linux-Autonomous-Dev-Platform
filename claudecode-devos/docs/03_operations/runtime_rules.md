@@ -1,0 +1,26 @@
+# Runtime Rules
+
+- `claude --dangerously-skip-permissions`を前提とする。
+- 毎分memory guardを実行する。
+- FREE < 3000MB または SWAP > 1000MB で回復動作を許可する。
+- pytestは最初に停止対象とする。
+- ClaudeはPIDファイルで確認できるプロセスを優先して停止する。
+- CPU、load average、diskのしきい値超過はwarningとして記録し、メモリ・swap異常がない限りrecoveryは起動しない。
+- Claude起動前にusage_managerでdaily/weekly limitを確認する。
+- セッション終了後に実行秒数をstate.jsonのusageへ加算する。
+- daily usageは日付変更後のusage_manager実行でリセットする。
+- weekly usageは金曜13時台のusage_manager実行で一度だけリセットする。
+- recovery発火時はmsmtp/mailutils設定が有効な場合のみGmail通知を送る。
+- GitHub連携は`gh auth login`済みの実行ユーザーでのみ動かす。
+- GitHub連携はbase branchへ直接pushせず、`feature/auto-issue-*` branchを作る。
+- PRの自動マージは`GITHUB_AUTO_MERGE=true`を明示した場合のみ実行する。
+- autonomous orchestratorは5分周期を基本とし、`state.json`の`decision.next_action`に従う。
+- CI修復は`repair/ci-*` branchで実行し、`repair_attempt_limit`到達後は`suspend`へ移行する。
+- CI系の自動マージは`ci.auto_merge_enabled=true`または`CI_AUTO_MERGE=true`を明示した場合のみ実行する。
+- develop時は`prompt_builder.py`で生成したプロンプトを`run-auto-dev.sh`が`claude-safe.sh`へ渡す。
+- Issue選定はbug/critical/security/CI系を優先し、enhancement/docsは低優先度にする。
+- develop時は`project_scheduler.py`で対象プロジェクトを選び、`run-scheduled-project.sh`が選定リポジトリで実行する。
+- multi project運用の初期値は`mode=single`、`max_parallel_projects=1`とする。
+- Dashboardは状態確認と緊急用の手動介入UIを提供する。
+- Dashboard manual controlは`control.manual_override`を使い、`resume`で自動判断へ戻す。
+- developとrepair_ciはWorkTree分離を優先し、main worktreeへの直接作業を避ける。

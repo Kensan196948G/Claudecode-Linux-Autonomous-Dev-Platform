@@ -1,0 +1,9 @@
+[Unit]
+Description=Run ClaudeCode DevOS Report Generator hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

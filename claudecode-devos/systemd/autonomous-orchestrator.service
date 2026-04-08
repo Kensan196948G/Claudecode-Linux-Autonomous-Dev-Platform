@@ -1,0 +1,11 @@
+[Unit]
+Description=ClaudeCode DevOS Autonomous Orchestrator
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=kensan
+WorkingDirectory=/opt/claudecode-devos
+Environment=DEVOS_HOME=/opt/claudecode-devos
+ExecStart=/opt/claudecode-devos/bin/autonomous_orchestrator.sh

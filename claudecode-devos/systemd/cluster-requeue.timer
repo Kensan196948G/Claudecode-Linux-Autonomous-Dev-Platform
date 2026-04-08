@@ -1,0 +1,10 @@
+[Unit]
+Description=Run ClaudeCode DevOS Cluster Failed Job Requeue every 3 minutes
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=3min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

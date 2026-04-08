@@ -1,0 +1,12 @@
+{
+  "job_id": "job-001",
+  "type": "develop",
+  "project_id": "proj-001",
+  "repo_path": "/home/kensan/Projects/sample-project-01",
+  "issue_number": 12,
+  "priority": 100,
+  "required_tags": ["develop"],
+  "status": "queued",
+  "assigned_worker": null,
+  "created_at": "2026-04-08 10:00:00"
+}
