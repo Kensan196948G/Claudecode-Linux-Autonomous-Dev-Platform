@@ -2,8 +2,9 @@
 import fcntl
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
+from re import sub
 
 DEVOS_HOME = Path(os.environ.get("DEVOS_HOME", "/opt/claudecode-devos"))
 STATE = Path(os.environ.get("DEVOS_STATE_FILE", DEVOS_HOME / "config/state.json"))
@@ -64,7 +65,7 @@ def clear_manual_action(reason="resume from dashboard"):
         write_json(STATE, state)
 
 
-def select_project(project_id, reason="selected from dashboard"):
+def select_project(project_id, reason="selected from dashboard", start_develop=False):
     projects = load_json(PROJECTS, {"projects": []}).get("projects", [])
     matches = [project for project in projects if project.get("id") == project_id]
     if not matches:
@@ -78,7 +79,7 @@ def select_project(project_id, reason="selected from dashboard"):
         state = load_json(STATE, {})
         control = state.setdefault("control", {})
         control["manual_override"] = True
-        control["manual_action"] = "develop"
+        control["manual_action"] = "develop" if start_develop else None
         control["manual_project_id"] = project_id
         control["manual_reason"] = reason
         control["manual_requested_at"] = timestamp()
@@ -88,6 +89,99 @@ def select_project(project_id, reason="selected from dashboard"):
         state.setdefault("projects", {})["active_project"] = project_id
         append_manual_history(state, "select_project", reason)
         write_json(STATE, state)
+
+
+def project_id_from_path(repo_path):
+    repo = Path(repo_path).resolve()
+    raw = repo.name
+    slug = sub(r"[^A-Za-z0-9_.-]+", "-", raw).strip("-")
+    return slug or "project"
+
+
+def select_project_path(repo_path, reason="selected from dashboard"):
+    repo = Path(repo_path).expanduser().resolve()
+    projects_root = Path(os.environ.get("DEVOS_PROJECTS_ROOT", "/home/kensan/Projects")).resolve()
+    try:
+        repo.relative_to(projects_root)
+    except ValueError as exc:
+        raise ValueError(f"Project must be under {projects_root}: {repo}") from exc
+    if not repo.is_dir() or not (repo / ".git").exists():
+        raise ValueError(f"Project repository not found: {repo}")
+
+    project_id = project_id_from_path(repo)
+    projects_data = load_json(PROJECTS, {"projects": []})
+    projects = projects_data.setdefault("projects", [])
+    now = timestamp().split(" ")[0]
+    release_due = (datetime.now() + timedelta(days=int(os.environ.get("PROJECT_TERM_DAYS", "183")))).strftime("%Y-%m-%d")
+    found = None
+    for project in projects:
+        if project.get("repository") == str(repo) or project.get("id") == project_id:
+            found = project
+            break
+
+    if found is None:
+        found = {
+            "id": project_id,
+            "name_ja": repo.name,
+            "name_en": repo.name,
+            "repository": str(repo),
+            "docs_dir": str(repo / "Docs"),
+            "session_prompt_file": str(repo / "START_PROMPT.md"),
+            "priority": "medium",
+            "weight": 70,
+            "status": "active",
+            "category": "discovered",
+            "registered_at": now,
+            "release_due": release_due,
+            "last_run_at": None,
+            "last_result": None,
+            "estimated_value": 60,
+            "estimated_effort": 50,
+            "strategic_fit": 60,
+            "personal_interest": 60,
+            "maintenance_cost": 30,
+            "ci_stability": 50,
+            "current_progress": 0,
+            "blocker_risk": 30,
+            "expected_reuse": 50,
+            "last_score": None,
+            "selection_status": "selected",
+        }
+        projects.append(found)
+    else:
+        found["repository"] = str(repo)
+        found["docs_dir"] = str(repo / "Docs")
+        found["session_prompt_file"] = str(repo / "START_PROMPT.md")
+        found["status"] = "active"
+        found["selection_status"] = "selected"
+
+    for project in projects:
+        if project is not found and project.get("selection_status") == "selected":
+            project["selection_status"] = "candidate"
+
+    write_json(PROJECTS, projects_data)
+    write_json(SELECTED, found)
+
+    LOCK.parent.mkdir(parents=True, exist_ok=True)
+    with LOCK.open("w", encoding="utf-8") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        state = load_json(STATE, {})
+        control = state.setdefault("control", {})
+        control["manual_override"] = True
+        control["manual_action"] = None
+        control["manual_project_id"] = found["id"]
+        control["manual_reason"] = reason
+        control["manual_requested_at"] = timestamp()
+        control["manual_requested_by"] = "local-dashboard"
+        state.setdefault("scheduler", {})["last_selected_project"] = found["id"]
+        state.setdefault("projects_runtime", {})["active_projects"] = [found["id"]]
+        state.setdefault("projects", {})["active_project"] = found["id"]
+        state.setdefault("github", {})["repo"] = str(repo)
+        state.setdefault("ci", {})["repo_path"] = str(repo)
+        state["projects"]["registered_count"] = len(projects)
+        append_manual_history(state, "select_project", f"{reason}: {repo}")
+        write_json(STATE, state)
+    return found
 
 
 def update_project(project_id, priority, status, weight):

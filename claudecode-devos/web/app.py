@@ -7,7 +7,8 @@ from pathlib import Path
 
 from flask import Flask, jsonify, redirect, render_template_string, request, url_for
 
-from manual_control import clear_manual_action, select_project, set_manual_action, update_project
+from dashboard_actions import discover_project_repositories, run_develop, run_repair_ci, running_action, stop_claude
+from manual_control import clear_manual_action, select_project, select_project_path, set_manual_action, update_project
 
 DEVOS_HOME = Path(os.environ.get("DEVOS_HOME", "/opt/claudecode-devos"))
 STATE = DEVOS_HOME / "config/state.json"
@@ -55,10 +56,16 @@ HTML = """
 <body>
   <h1>ClaudeCode DevOS ダッシュボード</h1>
   <div class="small">最終更新: {{ now }}</div>
+  {% if notice %}
+  <div class="card" style="margin-top:16px; border-left:4px solid #0f766e;">
+    <strong>操作結果</strong>
+    <div class="small">{{ notice }}</div>
+  </div>
+  {% endif %}
 
   <div class="card" style="margin-top:16px;">
     <h3>手動制御</h3>
-    <div class="small">手動優先={{ control.manual_override }} / 操作={{ action_labels.get(control.manual_action, control.manual_action) }} / プロジェクト={{ control.manual_project_id }}</div>
+    <div class="small">手動優先={{ control.manual_override }} / 操作={{ action_labels.get(control.manual_action, control.manual_action) }} / プロジェクト={{ control.manual_project_id }} / 実行中PID={{ running_pid or "なし" }}</div>
     <form method="post" action="/control" class="actions">
       <button class="btn btn-dev" name="action" value="develop">開発を実行</button>
       <button class="btn btn-repair" name="action" value="repair_ci">CI修復を実行</button>
@@ -67,9 +74,9 @@ HTML = """
       <button class="btn btn-resume" name="action" value="resume">自動判断へ戻す</button>
     </form>
     <form method="post" action="/select-project" class="actions">
-      <select name="project_id">
-        {% for project in projects.projects %}
-        <option value="{{ project.id }}" {% if project.id == scheduler.last_selected_project %}selected{% endif %}>{{ project.id }} - {{ project.name_ja }}</option>
+      <select name="repo_path">
+        {% for project in project_repositories %}
+        <option value="{{ project.repository }}" {% if project.repository == selected.repository %}selected{% endif %}>{{ project.name }} - {{ project.repository }}</option>
         {% endfor %}
       </select>
       <button class="btn btn-dev" type="submit">プロジェクトを選択</button>
@@ -320,7 +327,9 @@ def index():
         HTML,
         now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         projects=projects,
+        project_repositories=discover_project_repositories(),
         selected_json=pretty(selected),
+        selected=selected,
         cluster=cluster,
         cluster_leader=cluster_leader,
         cluster_jobs_json=pretty(cluster.get("jobs", {})),
@@ -342,6 +351,8 @@ def index():
         action_labels=ACTION_LABELS,
         priority_labels=PRIORITY_LABELS,
         status_labels=STATUS_LABELS,
+        running_pid=running_action(),
+        notice=request.args.get("notice", ""),
         decision_log=tail(DECISION_LOG),
         orchestrator_log=tail(ORCH_LOG),
         recovery_log=tail(RECOVERY_LOG),
@@ -352,19 +363,35 @@ def index():
 @app.route("/control", methods=["POST"])
 def control():
     action = request.form.get("action", "")
+    notice = ""
     if action == "resume":
         clear_manual_action()
+        notice = "自動判断へ戻しました。"
     elif action in {"develop", "repair_ci", "cooldown", "suspend"}:
         set_manual_action(action, "requested from dashboard")
-    return redirect(url_for("index"))
+        if action == "develop":
+            _, notice = run_develop()
+        elif action == "repair_ci":
+            _, notice = run_repair_ci()
+        elif action == "suspend":
+            _, notice = stop_claude()
+        else:
+            notice = "クールダウンを設定しました。"
+    return redirect(url_for("index", notice=notice))
 
 
 @app.route("/select-project", methods=["POST"])
 def select_project_route():
+    repo_path = request.form.get("repo_path", "")
     project_id = request.form.get("project_id", "")
-    if project_id:
+    notice = ""
+    if repo_path:
+        project = select_project_path(repo_path)
+        notice = f"プロジェクトを選択しました: {project['id']}"
+    elif project_id:
         select_project(project_id)
-    return redirect(url_for("index"))
+        notice = f"プロジェクトを選択しました: {project_id}"
+    return redirect(url_for("index", notice=notice))
 
 
 @app.route("/projects/update", methods=["POST"])

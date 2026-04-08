@@ -5,9 +5,10 @@ Wants=network-online.target
 
 [Service]
 User=kensan
-WorkingDirectory=/opt/claudecode-devos
+WorkingDirectory=/opt/claudecode-devos/web
 Environment=DEVOS_HOME=/opt/claudecode-devos
-ExecStart=/usr/bin/python3 /opt/claudecode-devos/web/app.py
+Environment=DEVOS_PROJECTS_ROOT=/home/kensan/Projects
+ExecStart=/usr/bin/gunicorn --workers 2 --bind 0.0.0.0:5050 --timeout 120 app:app
 Restart=always
 RestartSec=5
 
