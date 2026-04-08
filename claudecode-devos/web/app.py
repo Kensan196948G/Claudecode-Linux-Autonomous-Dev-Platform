@@ -35,6 +35,40 @@ HTML = """
   <title>ClaudeCode DevOS ダッシュボード</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="20">
+  <script>
+    async function refreshCliLogs() {
+      try {
+        const res = await fetch('/api/logs', {cache: 'no-store'});
+        const data = await res.json();
+        const updates = {
+          'process-snapshot': data.process_snapshot,
+          'claude-safe-log': data.claude_safe,
+          'development-log': data.development,
+          'project-runner-log': data.project_runner,
+          'dashboard-action-log': data.dashboard_actions
+        };
+        for (const [id, value] of Object.entries(updates)) {
+          const el = document.getElementById(id);
+          if (el) {
+            el.textContent = value || '';
+          }
+        }
+        const pidEl = document.getElementById('live-pids');
+        if (pidEl) {
+          pidEl.textContent = `DashboardジョブPID=${data.running_pid || 'なし'} / Claude PID=${data.claude_pid || 'なし'}`;
+        }
+      } catch (err) {
+        const el = document.getElementById('process-snapshot');
+        if (el) {
+          el.textContent = `ログ更新に失敗しました: ${err}`;
+        }
+      }
+    }
+    window.addEventListener('load', () => {
+      refreshCliLogs();
+      setInterval(refreshCliLogs, 2000);
+    });
+  </script>
   <style>
     body { font-family: Arial, sans-serif; margin:20px; background:#f6f8fb; color:#1d2433; }
     h1 { margin-bottom: 6px; }
@@ -89,8 +123,8 @@ HTML = """
 
   <div class="card" style="margin-top:16px;">
     <h3>CLI実行状況</h3>
-    <div class="small">DashboardジョブPID={{ running_pid or "なし" }} / Claude PID={{ claude_pid or "なし" }}</div>
-    <pre>{{ process_snapshot }}</pre>
+    <div id="live-pids" class="small">DashboardジョブPID={{ running_pid or "なし" }} / Claude PID={{ claude_pid or "なし" }}</div>
+    <pre id="process-snapshot">{{ process_snapshot }}</pre>
   </div>
 
   <div class="grid">
@@ -271,22 +305,22 @@ HTML = """
   <div class="grid">
     <div class="card">
       <h3>Claude実行ログ</h3>
-      <pre>{{ claude_safe_log }}</pre>
+      <pre id="claude-safe-log">{{ claude_safe_log }}</pre>
     </div>
     <div class="card">
       <h3>開発実行ログ</h3>
-      <pre>{{ development_log }}</pre>
+      <pre id="development-log">{{ development_log }}</pre>
     </div>
   </div>
 
   <div class="grid">
     <div class="card">
       <h3>プロジェクトランナーログ</h3>
-      <pre>{{ project_runner_log }}</pre>
+      <pre id="project-runner-log">{{ project_runner_log }}</pre>
     </div>
     <div class="card">
       <h3>Dashboard操作ログ</h3>
-      <pre>{{ dashboard_action_log }}</pre>
+      <pre id="dashboard-action-log">{{ dashboard_action_log }}</pre>
     </div>
   </div>
 </body>
@@ -515,6 +549,8 @@ def api_logs():
         "development": tail(DEVELOPMENT_LOG, 100),
         "dashboard_actions": tail(DASHBOARD_ACTION_LOG, 100),
         "process_snapshot": process_snapshot(),
+        "running_pid": running_action(),
+        "claude_pid": pid_from_file(DEVOS_HOME / "runtime/pids/claude.pid"),
     })
 
 
