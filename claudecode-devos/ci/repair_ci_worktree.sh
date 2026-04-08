@@ -22,15 +22,26 @@ LOG_FILE="$DEVOS_LOG_DIR/repair-ci.log"
 printf '%s [REPAIR-WT] start wt=%s branch=%s\n' "$(date '+%F %T')" "$WT_PATH" "$BRANCH" >> "$LOG_FILE"
 
 cd "$WT_PATH"
-timeout "$CI_REPAIR_TIMEOUT_SECONDS" "$DEVOS_HOME/bin/claude-safe.sh" < "$PROMPT_FILE" >> "$LOG_FILE" 2>&1 || true
+"$DEVOS_HOME/bin/sync-claudeos-template.sh" "$WT_PATH/.claude/claudeos" >> "$LOG_FILE" 2>&1 || {
+  "$DEVOS_HOME/ops/state_manager.py" set decision.next_action suspend
+  "$DEVOS_HOME/ops/state_manager.py" set system.last_error "ClaudeOS template sync failed during repair"
+  exit 1
+}
+timeout "$CI_REPAIR_TIMEOUT_SECONDS" "$DEVOS_HOME/bin/claude-safe.sh" "$(cat "$PROMPT_FILE")" >> "$LOG_FILE" 2>&1 || true
 
 if command -v pytest >/dev/null 2>&1; then
-  pytest -q >> "$LOG_FILE" 2>&1 || true
+  if pytest -q >> "$LOG_FILE" 2>&1; then
+    "$DEVOS_HOME/ops/state_manager.py" set ci.local_test_status success
+  else
+    "$DEVOS_HOME/ops/state_manager.py" set ci.local_test_status failure
+  fi
 fi
+"$DEVOS_HOME/ops/harness_checks.py" --repo "$WT_PATH" --phase Repair >> "$LOG_FILE" 2>&1 || true
+"$DEVOS_HOME/ops/stable_gate.py" evaluate >> "$LOG_FILE" 2>&1 || true
 
 PR_URL=""
-if [[ -n "$(git status --porcelain)" ]]; then
-  git add .
+if [[ -n "$(git status --porcelain -- ':!.claude/claudeos')" ]]; then
+  git add -- . ':!.claude/claudeos'
   git commit -m "fix(ci): automated repair in worktree" >> "$LOG_FILE" 2>&1 || true
   git push -u origin "$BRANCH" >> "$LOG_FILE" 2>&1 || true
   PR_URL="$(gh pr create --title "fix(ci): automated repair attempt" --body "Automated CI repair generated in isolated worktree" --base "$BASE_BRANCH" --head "$BRANCH" 2>> "$LOG_FILE" || true)"
