@@ -1,0 +1,9 @@
+[Unit]
+Description=Run ClaudeCode DevOS Log Retention daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target

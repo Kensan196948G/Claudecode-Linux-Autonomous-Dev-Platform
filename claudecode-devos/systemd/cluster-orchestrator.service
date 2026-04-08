@@ -1,0 +1,10 @@
+[Unit]
+Description=ClaudeCode DevOS Cluster Orchestrator
+After=network.target
+
+[Service]
+Type=oneshot
+User=kensan
+WorkingDirectory=/opt/claudecode-devos
+Environment=DEVOS_HOME=/opt/claudecode-devos
+ExecStart=/opt/claudecode-devos/cluster/controller/cluster_orchestrator.sh

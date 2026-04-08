@@ -1,0 +1,13 @@
+{
+  "worker": {
+    "id": "worker-01",
+    "hostname": "worker-01",
+    "controller_host": "192.168.0.100",
+    "controller_user": "kensan",
+    "work_root": "/opt/claudecode-devos",
+    "job_poll_interval_sec": 60,
+    "max_jobs": 1,
+    "tags": ["general", "repair"],
+    "enabled": true
+  }
+}

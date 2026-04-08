@@ -1,0 +1,14 @@
+[Unit]
+Description=ClaudeCode DevOS Session Runner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=kensan
+WorkingDirectory=/opt/claudecode-devos
+Environment=DEVOS_HOME=/opt/claudecode-devos
+ExecStart=/opt/claudecode-devos/bin/run-session.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run ClaudeCode DevOS Memory Guard every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+Persistent=true
+Unit=memory-guard.service
+
+[Install]
+WantedBy=timers.target

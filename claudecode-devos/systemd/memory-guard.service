@@ -1,0 +1,9 @@
+[Unit]
+Description=ClaudeCode DevOS Memory Guard
+
+[Service]
+Type=oneshot
+User=kensan
+WorkingDirectory=/opt/claudecode-devos
+Environment=DEVOS_HOME=/opt/claudecode-devos
+ExecStart=/usr/bin/python3 /opt/claudecode-devos/ops/memory_guard.py

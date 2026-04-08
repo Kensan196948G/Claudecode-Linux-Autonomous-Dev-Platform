@@ -1,0 +1,9 @@
+[Unit]
+Description=ClaudeCode DevOS Log Retention
+
+[Service]
+Type=oneshot
+User=kensan
+WorkingDirectory=/opt/claudecode-devos
+Environment=DEVOS_HOME=/opt/claudecode-devos
+ExecStart=/opt/claudecode-devos/ops/log_retention.sh

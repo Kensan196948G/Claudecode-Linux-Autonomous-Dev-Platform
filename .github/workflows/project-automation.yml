@@ -1,0 +1,29 @@
+name: 📌 Project Automation
+
+on:
+  issues:
+    types: [opened, reopened, labeled]
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  add-to-project:
+    name: 📌 Add Issue or PR to GitHub Project
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_URL: ${{ vars.PROJECT_URL }}
+      PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+
+    steps:
+      - name: 📌 Add to project
+        if: ${{ env.PROJECT_URL != '' && env.PROJECTS_TOKEN != '' }}
+        uses: actions/add-to-project@v1.0.2
+        with:
+          project-url: ${{ env.PROJECT_URL }}
+          github-token: ${{ env.PROJECTS_TOKEN }}

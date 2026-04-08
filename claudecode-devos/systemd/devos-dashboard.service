@@ -1,0 +1,15 @@
+[Unit]
+Description=ClaudeCode DevOS Flask Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=kensan
+WorkingDirectory=/opt/claudecode-devos
+Environment=DEVOS_HOME=/opt/claudecode-devos
+ExecStart=/usr/bin/python3 /opt/claudecode-devos/web/app.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

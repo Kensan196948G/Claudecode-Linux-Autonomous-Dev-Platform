@@ -1,0 +1,9 @@
+[Unit]
+Description=ClaudeCode DevOS Worker Job Poller
+
+[Service]
+Type=oneshot
+User=kensan
+WorkingDirectory=/opt/claudecode-devos
+Environment=DEVOS_HOME=/opt/claudecode-devos
+ExecStart=/opt/claudecode-devos/cluster/workers/poll_jobs.sh
