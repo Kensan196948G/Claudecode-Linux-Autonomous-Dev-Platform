@@ -19,6 +19,8 @@ ORCH_START="$(date +%s)"
 "$DEVOS_HOME/ops/usage_manager.py" check >> "$LOG_FILE" 2>&1 || true
 "$DEVOS_HOME/ops/memory_guard.py" >> "$LOG_FILE" 2>&1 || true
 "$DEVOS_HOME/ci/check_ci_status.sh" >> "$LOG_FILE" 2>&1 || true
+"$DEVOS_HOME/ops/harness_checks.py" --phase Monitor --skip-quality >> "$LOG_FILE" 2>&1 || true
+"$DEVOS_HOME/ops/stable_gate.py" evaluate >> "$LOG_FILE" 2>&1 || true
 NEXT_ACTION="$("$DEVOS_HOME/ops/decision_engine.py" 2>> "$LOG_FILE" || printf 'idle')"
 NEXT_ACTION="$(python3 - "$DEVOS_STATE_FILE" "$NEXT_ACTION" <<'PY'
 import json
@@ -36,6 +38,7 @@ PY
 )"
 
 if [[ "$NEXT_ACTION" == "repair_ci" ]]; then
+  "$DEVOS_HOME/ai/issue_factory.py" >> "$LOG_FILE" 2>&1 || true
   "$DEVOS_HOME/ai/issue_prioritizer.py" >> "$LOG_FILE" 2>&1 || true
   "$DEVOS_HOME/ai/prompt_builder.py" >> "$LOG_FILE" 2>&1 || true
 fi
@@ -62,6 +65,8 @@ case "$NEXT_ACTION" in
     ;;
 esac
 
+"$DEVOS_HOME/ops/harness_checks.py" --phase Verify >> "$LOG_FILE" 2>&1 || true
+"$DEVOS_HOME/ops/stable_gate.py" evaluate >> "$LOG_FILE" 2>&1 || true
 "$DEVOS_HOME/ci/merge_green_prs.sh" >> "$LOG_FILE" 2>&1 || true
 "$DEVOS_HOME/ai/agent_logger.sh" >> "$LOG_FILE" 2>&1 || true
 "$DEVOS_HOME/evolution/log_collector.py" "orchestrator_cycle" "success" "$(($(date +%s) - ORCH_START))" --detail "{\"next_action\":\"$NEXT_ACTION\"}" >> "$LOG_FILE" 2>&1 || true

@@ -4,6 +4,10 @@
   "type": "object",
   "required": [
     "system",
+    "goal",
+    "kpi",
+    "execution",
+    "automation",
     "limits",
     "usage",
     "resources",
@@ -57,9 +61,52 @@
       "required": ["repair_attempt_count", "repair_attempt_limit", "auto_merge_enabled", "merge_policy"],
       "properties": {
         "repair_attempt_count": {"type": "integer", "minimum": 0},
-        "repair_attempt_limit": {"type": "integer", "minimum": 1, "maximum": 10},
+        "repair_attempt_limit": {"type": "integer", "minimum": 1, "maximum": 15},
         "auto_merge_enabled": {"type": "boolean"},
-        "merge_policy": {"type": "string"}
+        "merge_policy": {"type": "string"},
+        "stable": {"type": "boolean"},
+        "stable_success_count": {"type": "integer", "minimum": 0},
+        "required_stable_successes": {"type": "integer", "minimum": 1, "maximum": 15},
+        "stable_blockers": {"type": "array", "items": {"type": "string"}},
+        "local_test_status": {"type": ["string", "null"]},
+        "lint_status": {"type": ["string", "null"]},
+        "build_status": {"type": ["string", "null"]},
+        "security_status": {"type": ["string", "null"]},
+        "codex_review_status": {"type": ["string", "null"]},
+        "error_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "goal": {
+      "type": "object",
+      "properties": {
+        "title": {"type": "string"},
+        "description": {"type": ["string", "null"]},
+        "defined": {"type": "boolean"}
+      }
+    },
+    "kpi": {
+      "type": "object",
+      "properties": {
+        "success_rate_target": {"type": "number"},
+        "current_success_rate": {"type": ["number", "null"]},
+        "status": {"type": "string"},
+        "last_evaluated_at": {"type": ["string", "null"]}
+      }
+    },
+    "execution": {
+      "type": "object",
+      "properties": {
+        "max_duration_minutes": {"type": "integer", "minimum": 1},
+        "remaining_seconds": {"type": "integer", "minimum": 0},
+        "time_phase": {"type": "string"}
+      }
+    },
+    "automation": {
+      "type": "object",
+      "properties": {
+        "auto_issue_generation": {"type": "boolean"},
+        "self_evolution": {"type": "boolean"},
+        "issue_factory_last_run_at": {"type": ["string", "null"]}
       }
     },
     "github": {

@@ -57,6 +57,9 @@ printf '%s [RUNNER] usage check: %s\n' "$(date '+%F %T')" "$USAGE_CHECK_OUTPUT" 
 "$DEVOS_HOME/ops/state_manager.py" set ci.repo_path "$PROJECT_REPO"
 "$DEVOS_HOME/ops/state_manager.py" set github.repo "$PROJECT_REPO"
 
+"$DEVOS_HOME/ops/harness_checks.py" --repo "$PROJECT_REPO" --phase Monitor --skip-quality >> "$LOG_FILE" 2>&1 || true
+"$DEVOS_HOME/ops/stable_gate.py" evaluate >> "$LOG_FILE" 2>&1 || true
+"$DEVOS_HOME/ai/issue_factory.py" >> "$LOG_FILE" 2>&1 || true
 "$DEVOS_HOME/ai/issue_prioritizer.py" >> "$LOG_FILE" 2>&1 || true
 "$DEVOS_HOME/ai/prompt_builder.py" >> "$LOG_FILE" 2>&1 || true
 
@@ -77,6 +80,8 @@ else
 fi
 END_TIME="$(date +%s)"
 DURATION="$((END_TIME - START_TIME))"
+"$DEVOS_HOME/ops/harness_checks.py" --repo "$PROJECT_REPO" --phase Verify >> "$LOG_FILE" 2>&1 || true
+"$DEVOS_HOME/ops/stable_gate.py" evaluate >> "$LOG_FILE" 2>&1 || true
 "$DEVOS_HOME/ops/usage_manager.py" record "$DURATION" >> "$LOG_FILE" 2>&1 || true
 
 python3 - "$DEVOS_PROJECTS_FILE" "$SELECTED" <<'PY'

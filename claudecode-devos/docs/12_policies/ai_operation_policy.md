@@ -5,7 +5,9 @@
 
 ## Principles
 - 無限ループは禁止する。
-- CI修復は `ci.repair_attempt_limit` 以下に制限する。上限は10回まで。
+- CI修復は `ci.repair_attempt_limit` 以下に制限する。上限は15回まで。
+- 自律開発セッションは最大5時間で停止し、5時間を超えて継続しない。
+- STABLE判定未達のPRはmerge/deployしない。
 - 本番ブランチ、base branch、main への直接 push を禁止する。
 - 重大変更はPRレビューを通す。
 - `state.json` はロック付き更新とatomic writeを使う。

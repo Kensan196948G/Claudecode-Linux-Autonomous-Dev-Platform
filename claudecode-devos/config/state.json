@@ -15,6 +15,27 @@
     "weekly_reset": "Friday 13:00",
     "project_term_days": 183
   },
+  "goal": {
+    "title": "自律開発最適化",
+    "description": "ClaudeOS v7.1 完全無人運用版として、Goal Drivenな自律開発を安全に継続する",
+    "defined": true
+  },
+  "kpi": {
+    "success_rate_target": 0.9,
+    "current_success_rate": 0.4,
+    "status": "unmet",
+    "last_evaluated_at": "2026-04-08 22:17:04"
+  },
+  "execution": {
+    "max_duration_minutes": 300,
+    "remaining_seconds": 18000,
+    "time_phase": "normal"
+  },
+  "automation": {
+    "auto_issue_generation": false,
+    "self_evolution": true,
+    "issue_factory_last_run_at": null
+  },
   "usage": {
     "daily_seconds_used": 0,
     "daily_limit_seconds": 18000,
@@ -69,12 +90,99 @@
     "last_run_id": null,
     "last_failure_summary": null,
     "repair_attempt_count": 0,
-    "repair_attempt_limit": 3,
+    "repair_attempt_limit": 15,
     "last_repair_at": null,
     "auto_merge_enabled": false,
     "merge_policy": "ci-green-only",
     "last_repair_branch": null,
-    "last_repair_pr": null
+    "last_repair_pr": null,
+    "stable": false,
+    "stable_success_count": 0,
+    "required_stable_successes": 3,
+    "stable_blockers": [
+      "test success: failure",
+      "CI success: unknown",
+      "review OK: unknown",
+      "security OK: failure"
+    ],
+    "stable_last_evaluated_at": "2026-04-08 22:16:58",
+    "stable_last_fingerprint": null,
+    "local_test_status": "failure",
+    "lint_status": "success",
+    "build_status": "success",
+    "security_status": "failure",
+    "codex_review_status": "unknown",
+    "error_count": 0,
+    "last_quality_checked_at": "2026-04-08 22:15:32",
+    "last_quality_summary": {
+      "test": {
+        "status": "failure",
+        "detail": "no tests ran in 0.10s\n\n/home/kensan/.local/lib/python3.12/site-packages/pytest_asyncio/plugin.py:208: PytestDeprecationWarning: The configuration option \"asyncio_default_fixture_loop_scope\" is unset.\nThe event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: \"function\", \"class\", \"module\", \"package\", \"session\"\n\n  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))"
+      },
+      "lint": {
+        "status": "success",
+        "detail": "ruff check ."
+      },
+      "build": {
+        "status": "success",
+        "detail": "python3 -c import ast,pathlib; [ast.parse(p.read_text(encoding='utf-8')) for p in pathlib.Path('.').rglob('*.py') if '.git' not in p.parts and '.claude' not in p.parts]"
+      },
+      "security": {
+        "status": "failure",
+        "detail": "           stderr=subprocess.STDOUT,\n95\t            start_new_session=True,\n96\t        )\n97\t    ACTION_PID.write_text(str(proc.pid), encoding=\"utf-8\")\n\n--------------------------------------------------\n>> Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.\n   Severity: Low   Confidence: High\n   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)\n   More Info: https://bandit.readthedocs.io/en/1.7.5/plugins/b603_subprocess_without_shell_equals_true.html\n   Location: ./claudecode-devos/web/dashboard_actions.py:199:17\n198\t    try:\n199\t        result = subprocess.run(\n200\t            check_command,\n201\t            capture_output=True,\n202\t            text=True,\n203\t            timeout=8,\n204\t            check=False,\n205\t        )\n206\t    except subprocess.TimeoutExpired:\n\n--------------------------------------------------\n>> Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.\n   Severity: Low   Confidence: High\n   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)\n   More Info: https://bandit.readthedocs.io/en/1.7.5/plugins/b603_subprocess_without_shell_equals_true.html\n   Location: ./claudecode-devos/web/dashboard_actions.py:293:15\n292\t    try:\n293\t        proc = subprocess.Popen(\n294\t            terminal_command,\n295\t            cwd=str(DEVOS_HOME),\n296\t            env=env,\n297\t            stdout=subprocess.DEVNULL,\n298\t            stderr=subprocess.DEVNULL,\n299\t            start_new_session=True,\n300\t        )\n301\t    except OSError as exc:\n\n--------------------------------------------------\n\nCode scanned:\n\tTotal lines of code: 3847\n\tTotal lines skipped (#nosec): 0\n\tTotal potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0\n\nRun metrics:\n\tTotal issues (by severity):\n\t\tUndefined: 0\n\t\tLow: 24\n\t\tMedium: 1\n\t\tHigh: 0\n\tTotal issues (by confidence):\n\t\tUndefined: 0\n\t\tLow: 0\n\t\tMedium: 1\n\t\tHigh: 24\nFiles skipped (0):"
+      }
+    }
+  },
+  "codex": {
+    "available": true,
+    "version": "codex-cli 0.118.0",
+    "setup_status": "success",
+    "review_status": "unknown",
+    "last_checked_at": "2026-04-08 22:17:04",
+    "last_result_file": null
+  },
+  "memory": {
+    "claude_home": "/home/kensan/.claude",
+    "global_claude_file": "/home/kensan/.claude/CLAUDE.md",
+    "global_state_file": "/home/kensan/.claude/state.json",
+    "claudeos_dir": "/home/kensan/.claude/claudeos",
+    "status": "success",
+    "last_checked_at": "2026-04-08 22:17:04",
+    "last_saved_at": "2026-04-08 22:17:04"
+  },
+  "agent_teams": {
+    "enabled": true,
+    "current_phase": "Verify",
+    "last_chain": [
+      "QA",
+      "Reviewer",
+      "Security",
+      "DevOps"
+    ],
+    "last_log_status": "success",
+    "last_checked_at": "2026-04-08 22:17:04",
+    "last_log_file": "/home/kensan/Projects/Claudecode-Linux-Autonomous-Dev-Platform/claudecode-devos/runtime/agent_logs/agent_team_chain.log"
+  },
+  "github_projects": {
+    "enabled": true,
+    "status": "repo-missing",
+    "last_status": "{\"projects\":[{\"closed\":false,\"fields\":{\"totalCount\":10},\"id\":\"PVT_kwHOClgkIc4BUBsh\",\"items\":{\"totalCount\":6},\"number\":18,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"ClaudeCode DevOS Roadmap\",\"url\":\"https://github.com/users/Kensan196948G/projects/18\"},{\"closed\":false,\"fields\":{\"totalCount\":10},\"id\":\"PVT_kwHOClgkIc4BTlQU\",\"items\":{\"totalCount\":16},\"number\":17,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"ServiceHub v1.x 開発ロードマップ\",\"url\":\"https://github.com/users/Kensan196948G/projects/17\"},{\"closed\":false,\"fields\":{\"totalCount\":11},\"id\":\"PVT_kwHOClgkIc4BTYG7\",\"items\":{\"totalCount\":20},\"number\":16,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"IT-Change-CAB-Platform 開発司令盤\",\"url\":\"https://github.com/users/Kensan196948G/projects/16\"},{\"closed\":false,\"fields\":{\"totalCount\":10},\"id\":\"PVT_kwHOClgkIc4BTYGf\",\"items\":{\"totalCount\":31},\"number\":15,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"Construction-GRC-System 開発司令盤\",\"url\":\"https://github.com/users/Kensan196948G/projects/15\"},{\"closed\":false,\"fields\":{\"totalCount\":11},\"id\":\"PVT_kwHOClgkIc4BS7Tk\",\"items\":{\"totalCount\":14},\"number\":14,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"AEGIS-SIGHT 開発司令盤\",\"url\":\"https://github.com/users/Kensan196948G/projects/14\"},{\"closed\":false,\"fields\":{\"totalCount\":10},\"id\":\"PVT_kwHOClgkIc4BS7Tg\",\"items\":{\"totalCount\":27},\"number\":13,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"IT-BCP-ITSCM-System\",\"url\":\"https://github.com/users/Kensan196948G/projects/13\"},{\"closed\":false,\"fields\":{\"totalCount\":10},\"id\":\"PVT_kwHOClgkIc4BSuPD\",\"items\":{\"totalCount\":48},\"number\":12,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"ZeroTrust-ID-Governance 開発司令盤\",\"url\":\"https://github.com/users/Kensan196948G/projects/12\"},{\"closed\":false,\"fields\":{\"totalCount\":10},\"id\":\"PVT_kwHOClgkIc4BStOA\",\"items\":{\"totalCount\":51},\"number\":11,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"Construction-SIEM-Platform\",\"url\":\"https://github.com/users/Kensan196948G/projects/11\"},{\"closed\":false,\"fields\":{\"totalCount\":10},\"id\":\"PVT_kwHOClgkIc4BStN-\",\"items\":{\"totalCount\":13},\"number\":10,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"ZeroTrust-ID-Governance\",\"url\":\"https://github.com/users/Kensan196948G/projects/10\"},{\"closed\":false,\"fields\":{\"totalCount\":10},\"id\":\"PVT_kwHOClgkIc4BSlar\",\"items\":{\"totalCount\":27},\"number\":9,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"Enterprise AI HelpDesk v2.0\",\"url\":\"https://github.com/users/Kensan196948G/projects/9\"},{\"closed\":false,\"fields\":{\"totalCount\":10},\"id\":\"PVT_kwHOClgkIc4BSSkx\",\"items\":{\"totalCount\":27},\"number\":8,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"ITSM-System Development\",\"url\":\"https://github.com/users/Kensan196948G/projects/8\"},{\"closed\":false,\"fields\":{\"totalCount\":10},\"id\":\"PVT_kwHOClgkIc4BSSQg\",\"items\":{\"totalCount\":15},\"number\":7,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"IntegratedITAssetServiceManagement\",\"url\":\"https://github.com/users/Kensan196948G/projects/7\"},{\"closed\":false,\"fields\":{\"totalCount\":10},\"id\":\"PVT_kwHOClgkIc4BSSP-\",\"items\":{\"totalCount\":38},\"number\":6,\"owner\":{\"login\":\"Kensan196948G\",\"type\":\"User\"},\"public\":false,\"readme\":\"\",\"shortDescription\":\"\",\"title\":\"ServiceMatrix\",\"url\":\"https://github.com/users/Kensan196948G/projects/6\"},{\"closed\":false,\"fields\":{\"totalCount\":11},\"id\":\"PVT_kwHOClgkIc4BSSPy\",\"items\":",
+    "last_checked_at": "2026-04-08 22:17:04",
+    "last_error": null
+  },
+  "tokens": {
+    "status": "normal",
+    "budget": {
+      "Monitor": 10,
+      "Development": 35,
+      "Verify": 20,
+      "Improvement": 10,
+      "Debug": 15,
+      "IssueFactory": 5,
+      "Release": 5
+    },
+    "usage_percent": 0.0,
+    "last_checked_at": "2026-04-08 22:17:04"
   },
   "risk": {
     "memory_pressure": false,
@@ -84,8 +192,8 @@
   },
   "ai": {
     "selected_issue_file": null,
-    "current_prompt_file": null,
-    "last_prompt_built_at": null,
+    "current_prompt_file": "/home/kensan/Projects/Claudecode-Linux-Autonomous-Dev-Platform/claudecode-devos/runtime/prompts/current_prompt.md",
+    "last_prompt_built_at": "2026-04-08 22:17:08",
     "last_agent_log_at": null,
     "decision_log": []
   },

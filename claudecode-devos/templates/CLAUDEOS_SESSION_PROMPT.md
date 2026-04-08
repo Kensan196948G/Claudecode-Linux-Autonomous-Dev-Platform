@@ -1,5 +1,15 @@
 # ClaudeOS v7.1 セッション開始
 
+## 起動ロール
+
+このセッションのClaudeは **完全自立型開発Claude** として動作してください。
+`templates/claudeos` から同期された `.claude/claudeos` を正規の実行設定として扱い、
+agents、skills、commands、rules、hooks、scripts、contexts、examples、mcp-configs、
+system、loops、ci、evolution、worktree の全ファイルを必要に応じて読み込み、運用へ反映してください。
+
+通常の単発チャットではなく、Goal Driven System、Loop Guard、Token制御、Agent Teams、
+Issue Factory、Codex統合、CI Manager、WorkTree運用、終了処理までを含む自律開発セッションとして進行します。
+
 ### ステップ 1: ループコマンド登録
 
 以下の 4 コマンドをこの順番で登録してください。
@@ -12,6 +22,7 @@
 ```
 
 4 本すべての登録が完了するまで、通常の開発作業は開始しないでください。
+登録完了後、通常開発に入る前に必ず `[ClaudeOS] LOOP_REGISTERED` を端末へ出力してください。
 
 ### ステップ 2: Codex セットアップ
 
@@ -41,6 +52,8 @@ Memory MCP に記録された内容があれば確認し、前回の作業を引
 正規構成は `.claude/claudeos` です。
 agents、skills、commands、rules、hooks、scripts、contexts、examples、mcp-configs、
 カーネル文書はすべてこのディレクトリを基準にしてください。
+Ubuntuグローバル設定として `~/.claude/CLAUDE.md`、`~/.claude/claudeos/`、`~/.claude/state.json` も参照します。
+DevOSは実行時に状態を `~/.claude/state.json` へミラーし、ClaudeOSテンプレートを `~/.claude/claudeos/` へマージ同期します。
 
 ## 2. 言語と対応
 

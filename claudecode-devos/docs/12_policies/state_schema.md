@@ -11,6 +11,7 @@
 ## Rules
 - 新しいトップレベルキーを追加した場合は schema と docs を更新する。
 - 自動更新は `state_manager.py` かロック付き atomic write を使う。
-- `ci.repair_attempt_limit` は10以下にする。
+- `ci.repair_attempt_limit` は15以下にする。
+- `ci.stable` は test / lint / build / CI / review / security / error 0 の判定を満たした場合のみ true とする。
 - `decision.next_action` は `idle`, `develop`, `verify`, `repair_ci`, `cooldown`, `suspend` の範囲にする。
 - `github.auto_merge_enabled` と `ci.auto_merge_enabled` は明示的に有効化するまで false とする。

@@ -57,6 +57,15 @@ def render_report(state, projects):
     scheduler = state.get("scheduler", {})
     history = state.get("history", {})
     evolution = state.get("evolution", {})
+    goal = state.get("goal", {})
+    kpi = state.get("kpi", {})
+    execution = state.get("execution", {})
+    automation = state.get("automation", {})
+    codex = state.get("codex", {})
+    memory = state.get("memory", {})
+    agent_teams = state.get("agent_teams", {})
+    github_projects = state.get("github_projects", {})
+    tokens = state.get("tokens", {})
     ai_decisions = state.get("ai_decision_log") or state.get("ai", {}).get("decision_log", [])
 
     project_lines = []
@@ -84,11 +93,23 @@ def render_report(state, projects):
 - current_mode: {decision.get('current_mode')}
 - reason: {decision.get('reason')}
 
+## Goal / KPI
+- goal: {goal.get('title')}
+- goal_defined: {goal.get('defined')}
+- kpi_status: {kpi.get('status')}
+- success_rate: {kpi.get('current_success_rate')}/{kpi.get('success_rate_target')}
+- auto_issue_generation: {automation.get('auto_issue_generation')}
+- self_evolution: {automation.get('self_evolution')}
+
 ## Usage
 - daily_hours: {round((usage.get('daily_seconds_used') or 0) / 3600, 2)}
 - daily_limit_hours: {round((usage.get('daily_limit_seconds') or 0) / 3600, 2)}
 - weekly_hours: {round((usage.get('weekly_seconds_used') or 0) / 3600, 2)}
 - weekly_limit_hours: {round((usage.get('weekly_limit_seconds') or 0) / 3600, 2)}
+- remaining_seconds: {execution.get('remaining_seconds')}
+- time_phase: {execution.get('time_phase')}
+- token_status: {tokens.get('status')}
+- token_usage_percent: {tokens.get('usage_percent')}
 
 ## Resources
 - memory_free_mb: {resources.get('memory_free_mb')}
@@ -102,7 +123,24 @@ def render_report(state, projects):
 - last_run_id: {ci.get('last_run_id')}
 - repair_attempt_count: {ci.get('repair_attempt_count')}
 - repair_attempt_limit: {ci.get('repair_attempt_limit')}
+- stable: {ci.get('stable')}
+- stable_success_count: {ci.get('stable_success_count')}/{ci.get('required_stable_successes')}
+- stable_blockers: {ci.get('stable_blockers')}
+- local_test_status: {ci.get('local_test_status')}
+- lint_status: {ci.get('lint_status')}
+- build_status: {ci.get('build_status')}
+- security_status: {ci.get('security_status')}
+- codex_review_status: {ci.get('codex_review_status')}
 - last_failure_summary: {ci.get('last_failure_summary')}
+
+## Harness
+- codex_setup_status: {codex.get('setup_status')}
+- codex_review_status: {codex.get('review_status')}
+- memory_status: {memory.get('status')}
+- memory_state_file: {memory.get('global_state_file')}
+- agent_phase: {agent_teams.get('current_phase')}
+- agent_chain: {agent_teams.get('last_chain')}
+- github_projects_status: {github_projects.get('status')}
 
 ## Scheduler
 - mode: {scheduler.get('mode')}

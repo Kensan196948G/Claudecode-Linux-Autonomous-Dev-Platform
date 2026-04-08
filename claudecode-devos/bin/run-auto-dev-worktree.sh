@@ -44,23 +44,29 @@ WT_PATH="$("$DEVOS_HOME/ops/worktree_manager.sh" create "$PROJECT_REPO" "$BRANCH
 "$DEVOS_HOME/ai/agent_phase_logger.sh" "DEVELOP" "feature worktree created $WT_PATH"
 printf '%s [DEV-WT] start wt=%s branch=%s\n' "$(date '+%F %T')" "$WT_PATH" "$BRANCH" >> "$LOG_FILE"
 
-if [[ ! -s "$PROMPT" ]]; then
-  "$DEVOS_HOME/ai/prompt_builder.py" >/dev/null
-fi
-
 cd "$WT_PATH"
+"$DEVOS_HOME/bin/sync-claudeos-template.sh" "$WT_PATH/.claude/claudeos" >> "$LOG_FILE" 2>&1 || {
+  "$DEVOS_HOME/ops/state_manager.py" set decision.next_action suspend
+  "$DEVOS_HOME/ops/state_manager.py" set system.last_error "ClaudeOS template sync failed"
+  exit 1
+}
+"$DEVOS_HOME/ai/prompt_builder.py" >/dev/null
+
 if [[ "${DEVOS_CLAUDE_FOREGROUND:-false}" == "true" ]]; then
   printf '[DevOS] worktree=%s\n' "$WT_PATH"
   printf '[DevOS] prompt=%s\n' "$PROMPT"
   printf '[DevOS] launching Claude CLI...\n'
   timeout --foreground "$AUTO_DEV_TIMEOUT_SECONDS" "$DEVOS_HOME/bin/claude-safe.sh" "$(cat "$PROMPT")" || true
 else
-  timeout "$AUTO_DEV_TIMEOUT_SECONDS" "$DEVOS_HOME/bin/claude-safe.sh" < "$PROMPT" >> "$LOG_FILE" 2>&1 || true
+  timeout "$AUTO_DEV_TIMEOUT_SECONDS" "$DEVOS_HOME/bin/claude-safe.sh" "$(cat "$PROMPT")" >> "$LOG_FILE" 2>&1 || true
 fi
 
+"$DEVOS_HOME/ops/harness_checks.py" --repo "$WT_PATH" --phase Verify >> "$LOG_FILE" 2>&1 || true
+"$DEVOS_HOME/ops/stable_gate.py" evaluate >> "$LOG_FILE" 2>&1 || true
+
 PR_URL=""
-if [[ -n "$(git status --porcelain)" ]]; then
-  git add .
+if [[ -n "$(git status --porcelain -- ':!.claude/claudeos')" ]]; then
+  git add -- . ':!.claude/claudeos'
   git commit -m "feat: automated development in worktree" >> "$LOG_FILE" 2>&1 || true
   git push -u origin "$BRANCH" >> "$LOG_FILE" 2>&1 || true
   PR_URL="$(gh pr create --title "feat: automated development for ${PROJECT_ID}" --body "Automated change created in isolated worktree" --base "$GITHUB_BASE_BRANCH" --head "$BRANCH" 2>> "$LOG_FILE" || true)"

@@ -57,8 +57,10 @@ def validate_state(errors):
 
     ci = state.get("ci", {})
     repair_limit = ci.get("repair_attempt_limit")
-    require(isinstance(repair_limit, int) and 1 <= repair_limit <= 10, f"ci.repair_attempt_limit must be 1..10: {repair_limit}", errors)
+    require(isinstance(repair_limit, int) and 1 <= repair_limit <= 15, f"ci.repair_attempt_limit must be 1..15: {repair_limit}", errors)
     require(ci.get("merge_policy") == "ci-green-only", f"ci.merge_policy must be ci-green-only: {ci.get('merge_policy')}", errors)
+    required_stable_successes = ci.get("required_stable_successes", 3)
+    require(isinstance(required_stable_successes, int) and 1 <= required_stable_successes <= 15, f"ci.required_stable_successes must be 1..15: {required_stable_successes}", errors)
 
     usage = state.get("usage", {})
     for key in ("daily_seconds_used", "daily_limit_seconds", "weekly_seconds_used", "weekly_limit_seconds"):
@@ -76,6 +78,16 @@ def validate_state(errors):
 
     control = state.get("control", {})
     require(isinstance(control.get("manual_override"), bool), "control.manual_override must be boolean", errors)
+
+    goal = state.get("goal", {})
+    require(isinstance(goal, dict) and bool(goal.get("title")), "goal.title must be defined", errors)
+    kpi = state.get("kpi", {})
+    target = kpi.get("success_rate_target")
+    require(isinstance(target, (int, float)) and 0 < float(target) <= 1, f"kpi.success_rate_target must be 0..1: {target}", errors)
+    execution = state.get("execution", {})
+    require(execution.get("max_duration_minutes") == 300, f"execution.max_duration_minutes must be 300: {execution.get('max_duration_minutes')}", errors)
+    automation = state.get("automation", {})
+    require(isinstance(automation.get("auto_issue_generation"), bool), "automation.auto_issue_generation must be boolean", errors)
     return state
 
 

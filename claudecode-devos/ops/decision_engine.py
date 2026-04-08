@@ -15,7 +15,7 @@ MAX_SWAP_USED_MB = float(os.environ.get("MAX_SWAP_USED_MB", "1000"))
 MAX_CPU_PERCENT = float(os.environ.get("MAX_CPU_PERCENT", "85"))
 DISK_ALERT_PERCENT = float(os.environ.get("DISK_ALERT_PERCENT", "90"))
 COOLDOWN_SECONDS = int(os.environ.get("DECISION_COOLDOWN_SECONDS", "900"))
-REPAIR_LIMIT = int(os.environ.get("CI_REPAIR_ATTEMPT_LIMIT", "3"))
+REPAIR_LIMIT = int(os.environ.get("CI_REPAIR_ATTEMPT_LIMIT", "15"))
 
 
 def now():
@@ -45,6 +45,73 @@ def log(message):
 
 
 def ensure_sections(state):
+    state.setdefault("goal", {
+        "title": "自律開発最適化",
+        "description": "ClaudeOS v7.1 完全無人運用版として、Goal Drivenな自律開発を安全に継続する",
+        "defined": True,
+    })
+    state.setdefault("kpi", {
+        "success_rate_target": 0.9,
+        "current_success_rate": None,
+        "status": "unknown",
+        "last_evaluated_at": None,
+    })
+    state.setdefault("execution", {
+        "max_duration_minutes": 300,
+        "remaining_seconds": 0,
+        "time_phase": "unknown",
+    })
+    state.setdefault("automation", {
+        "auto_issue_generation": False,
+        "self_evolution": True,
+        "issue_factory_last_run_at": None,
+    })
+    state.setdefault("codex", {
+        "available": None,
+        "version": None,
+        "setup_status": "unknown",
+        "review_status": "unknown",
+        "last_checked_at": None,
+        "last_result_file": None,
+    })
+    state.setdefault("memory", {
+        "claude_home": None,
+        "global_claude_file": None,
+        "global_state_file": None,
+        "claudeos_dir": None,
+        "status": "unknown",
+        "last_checked_at": None,
+        "last_saved_at": None,
+    })
+    state.setdefault("agent_teams", {
+        "enabled": True,
+        "current_phase": "Monitor",
+        "last_chain": [],
+        "last_log_status": "unknown",
+        "last_checked_at": None,
+    })
+    state.setdefault("github_projects", {
+        "enabled": False,
+        "status": "unconfigured",
+        "last_status": None,
+        "last_checked_at": None,
+        "last_error": None,
+    })
+    state.setdefault("tokens", {
+        "status": "unknown",
+        "budget": {
+            "Monitor": 10,
+            "Development": 35,
+            "Verify": 20,
+            "Improvement": 10,
+            "Debug": 15,
+            "IssueFactory": 5,
+            "Release": 5,
+        },
+        "usage_percent": None,
+        "last_checked_at": None,
+    })
+
     decision = state.setdefault("decision", {})
     decision.setdefault("current_mode", "safe")
     decision.setdefault("next_action", "idle")
@@ -65,6 +132,16 @@ def ensure_sections(state):
     ci.setdefault("last_repair_at", None)
     ci.setdefault("auto_merge_enabled", False)
     ci.setdefault("merge_policy", "ci-green-only")
+    ci.setdefault("stable", False)
+    ci.setdefault("stable_success_count", 0)
+    ci.setdefault("required_stable_successes", int(os.environ.get("STABLE_REQUIRED_SUCCESSES", "3")))
+    ci.setdefault("stable_blockers", ["not evaluated"])
+    ci.setdefault("local_test_status", None)
+    ci.setdefault("lint_status", None)
+    ci.setdefault("build_status", None)
+    ci.setdefault("security_status", None)
+    ci.setdefault("codex_review_status", None)
+    ci.setdefault("error_count", 0)
 
     risk = state.setdefault("risk", {})
     risk.setdefault("memory_pressure", False)
