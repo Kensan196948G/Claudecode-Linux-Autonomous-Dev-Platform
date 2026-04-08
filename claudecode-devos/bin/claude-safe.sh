@@ -4,6 +4,7 @@ set -euo pipefail
 DEVOS_HOME="${DEVOS_HOME:-/opt/claudecode-devos}"
 # shellcheck source=/dev/null
 source "$DEVOS_HOME/config/devos.env"
+: "${CLAUDE_CMD:?CLAUDE_CMD is required}"
 
 LOG_FILE="$DEVOS_LOG_DIR/claude-safe.log"
 PID_FILE="$DEVOS_PID_DIR/claude.pid"
@@ -14,6 +15,13 @@ log() {
 }
 
 log "claude-safe starting"
+
+if ! command -v "$CLAUDE_CMD" >/dev/null 2>&1; then
+  log "Claude command not found: $CLAUDE_CMD"
+  "$DEVOS_HOME/ops/state_manager.py" set claude.status error || true
+  "$DEVOS_HOME/ops/state_manager.py" set system.last_error "Claude command not found: $CLAUDE_CMD" || true
+  exit 127
+fi
 
 ulimit -v "$CLAUDE_MEMORY_LIMIT_KB"
 
