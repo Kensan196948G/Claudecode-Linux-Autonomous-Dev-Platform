@@ -293,8 +293,8 @@ gantt
 ## 📚 関連ドキュメント
 
 - 🧰 [DevOS配布ツリー](./claudecode-devos/README.md)
+- 📚 [ルートDocs索引](./docs/00_索引（Index）.md)
 - 🛡️ [運用ポリシー](./claudecode-devos/docs/00_governance/operations_policy.md)
 - 📊 [ランタイムルール](./claudecode-devos/docs/03_operations/runtime_rules.md)
 - 🧠 [アーキテクチャ概要](./claudecode-devos/docs/02_architecture/overview.md)
-- 📌 [GitHub運用メモ](./docs/github/projects-and-actions.md)
-
+- 📌 [GitHub運用メモ](./docs/07_GitHub連携（GitHubIntegration）/03_ProjectsとActions（ProjectsAndActions）.md)

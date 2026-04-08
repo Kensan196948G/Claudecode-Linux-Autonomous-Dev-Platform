@@ -1,0 +1,35 @@
+# 03_受け入れ基準（AcceptanceCriteria）
+
+## 位置づけ
+この文書は `14_テスト（Testing）` に属する運用ドキュメントです。
+
+## 目的
+変更を採用する最低条件を定義する。
+
+## 対象読者
+- DevOS を導入・運用する管理者
+- ClaudeCode の自律実行を監視する担当者
+- GitHub Actions / Projects / systemd の状態を確認する担当者
+
+## 主要トピック
+- 設定検証OK
+- CI成功
+- Docs更新
+- state破損なし
+
+## 運用メモ
+- 変更時は `state.json`、`projects.json`、Dashboard 表示、systemd 状態の整合性を確認する。
+- 自律実行に関わる設定は、最初に安全側の値で試験し、ログを確認してから強める。
+- GitHub 連携を変更する場合は、PR、CI、Projects への反映を必ず確認する。
+
+## 確認チェックリスト
+- [ ] 設定検証OK の設定または運用状態を確認する
+- [ ] CI成功 の設定または運用状態を確認する
+- [ ] Docs更新 の設定または運用状態を確認する
+- [ ] state破損なし の設定または運用状態を確認する
+
+## 関連ファイル
+- `claudecode-devos/config/state.json`
+- `claudecode-devos/config/projects.json`
+- `claudecode-devos/config/devos.env`
+- `claudecode-devos/docs/`
