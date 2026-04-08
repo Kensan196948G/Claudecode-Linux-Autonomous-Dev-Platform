@@ -1,6 +1,14 @@
 __pycache__/
 *.py[cod]
 
+# Personal notes and design sketches (move to docs/notes/ for archival)
+# These files are tracked in docs/notes/ — do not place .md files in root
+*.draft.md
+
+# Tool caches
+.ruff_cache/
+.pytest_cache/
+
 claudecode-devos/runtime/logs/*
 claudecode-devos/runtime/pids/*
 claudecode-devos/runtime/tmp/*
@@ -21,12 +29,14 @@ claudecode-devos/runtime/evolution/metrics/*
 claudecode-devos/runtime/evolution/history/*
 claudecode-devos/runtime/cluster/*
 claudecode-devos/runtime/archive/*
+claudecode-devos/runtime/github/*
 claudecode-devos/cluster/events/*
 claudecode-devos/cluster/locks/*
 claudecode-devos/cluster/failures/*
 claudecode-devos/cluster/archive/*
 claudecode-devos/cluster/leader/leader.json
 claudecode-devos/cluster/jobs/job-*.json
+claudecode-devos/cluster/controller/cluster_state.json
 claudecode-devos/strategy/scores/*
 claudecode-devos/strategy/history/*
 claudecode-devos/reports/report_*.md
@@ -51,6 +61,7 @@ claudecode-devos/reports/report_*.md
 !claudecode-devos/runtime/evolution/history/.gitkeep
 !claudecode-devos/runtime/cluster/.gitkeep
 !claudecode-devos/runtime/archive/.gitkeep
+!claudecode-devos/runtime/github/.gitkeep
 !claudecode-devos/cluster/events/.gitkeep
 !claudecode-devos/cluster/locks/.gitkeep
 !claudecode-devos/cluster/failures/.gitkeep
