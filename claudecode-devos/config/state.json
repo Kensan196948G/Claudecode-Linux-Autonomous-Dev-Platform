@@ -83,7 +83,7 @@
   },
   "ci": {
     "enabled": true,
-    "repo_path": "/home/kensan/Projects/sample-project-01",
+    "repo_path": "/home/kensan/Projects/Claudecode-Linux-Autonomous-Dev-Platform",
     "default_branch": "main",
     "last_checked_at": null,
     "last_run_status": null,
