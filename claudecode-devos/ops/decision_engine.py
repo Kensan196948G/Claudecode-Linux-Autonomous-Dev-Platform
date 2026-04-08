@@ -16,6 +16,8 @@ MAX_CPU_PERCENT = float(os.environ.get("MAX_CPU_PERCENT", "85"))
 DISK_ALERT_PERCENT = float(os.environ.get("DISK_ALERT_PERCENT", "90"))
 COOLDOWN_SECONDS = int(os.environ.get("DECISION_COOLDOWN_SECONDS", "900"))
 REPAIR_LIMIT = int(os.environ.get("CI_REPAIR_ATTEMPT_LIMIT", "15"))
+# Minimum interval (seconds) between Issue Factory runs when KPI is unmet
+ISSUE_FACTORY_INTERVAL = int(os.environ.get("ISSUE_FACTORY_INTERVAL_SECONDS", "1800"))
 
 
 def now():
@@ -199,7 +201,51 @@ def decide(state):
     decision["reason"] = reason
     decision["cooldown_until"] = cooldown_until
     decision["last_decision_at"] = timestamp(current)
+
+    # Auto-enable issue generation when KPI is unmet and enough time has passed
+    _update_auto_issue_generation(state, current)
+
+    # Resolve worktree base_dir from DEVOS_HOME env var if it contains a placeholder
+    _resolve_worktree_path(state)
+
     return next_action, reason, decision["current_mode"]
+
+
+def _update_auto_issue_generation(state, current):
+    """Enable auto_issue_generation when KPI is unmet; respect minimum interval."""
+    kpi = state.get("kpi", {})
+    automation = state.setdefault("automation", {})
+
+    success_rate = kpi.get("current_success_rate")
+    target = kpi.get("success_rate_target", 0.9)
+    kpi_unmet = success_rate is not None and float(success_rate) < float(target)
+
+    if not kpi_unmet:
+        # KPI met — disable automatic issue generation
+        automation["auto_issue_generation"] = False
+        return
+
+    # KPI unmet — enable only if interval has elapsed since last factory run
+    last_run_str = automation.get("issue_factory_last_run_at")
+    if last_run_str:
+        try:
+            last_run = datetime.strptime(last_run_str, "%Y-%m-%d %H:%M:%S")
+            elapsed = (current - last_run).total_seconds()
+            if elapsed < ISSUE_FACTORY_INTERVAL:
+                return  # Too soon — leave current value unchanged
+        except ValueError:
+            pass  # Malformed timestamp — fall through and enable
+
+    automation["auto_issue_generation"] = True
+
+
+def _resolve_worktree_path(state):
+    """Replace ${DEVOS_HOME} placeholder in worktree.base_dir with the actual env value."""
+    worktree = state.get("worktree", {})
+    base_dir = worktree.get("base_dir", "")
+    if "${DEVOS_HOME}" in str(base_dir):
+        devos_home = os.environ.get("DEVOS_HOME", str(DEVOS_HOME))
+        worktree["base_dir"] = base_dir.replace("${DEVOS_HOME}", devos_home)
 
 
 def main():

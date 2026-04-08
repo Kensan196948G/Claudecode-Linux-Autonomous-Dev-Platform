@@ -1,0 +1,56 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(python3 *)",
+      "Bash(pytest *)",
+      "Bash(ruff *)",
+      "Bash(bandit *)",
+      "Bash(shellcheck *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(echo *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Read",
+      "Write",
+      "Edit"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "DEVOS_HOME=${DEVOS_HOME:-/opt/claudecode-devos} python3 ${DEVOS_HOME}/ops/state_manager.py touch system.last_session_end 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "DEVOS_HOME=${DEVOS_HOME:-/opt/claudecode-devos} python3 ${DEVOS_HOME}/ops/state_manager.py set system.status active 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}

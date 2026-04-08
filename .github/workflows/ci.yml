@@ -12,35 +12,80 @@ permissions:
 
 jobs:
   validate:
-    name: 🛡️ Validate Bash, Python, and JSON
+    name: 🛡️ Lint, Test, Security
     runs-on: ubuntu-latest
 
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
+      - name: 🐍 Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Install dependencies
+        run: pip install -r claudecode-devos/requirements-dev.txt
+
       - name: 🐚 Install shellcheck
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
 
-      - name: 🐚 Shellcheck
+      - name: 🐚 Shellcheck (all .sh files)
         run: |
-          shellcheck claudecode-devos/bin/*.sh claudecode-devos/ops/*.sh claudecode-devos/install.sh
+          find claudecode-devos -name "*.sh" \
+            -not -path "*/.git/*" \
+            -print0 \
+            | xargs -0 shellcheck --severity=warning
 
-      - name: 🐍 Python syntax check
+      - name: 🐍 Python syntax check (all .py files)
         run: |
-          python3 -m py_compile \
-            claudecode-devos/ops/state_manager.py \
-            claudecode-devos/ops/metrics_snapshot.py \
-            claudecode-devos/ops/memory_guard.py
+          find claudecode-devos -name "*.py" \
+            -not -path "*/__pycache__/*" \
+            -not -path "*/.git/*" \
+            -print0 \
+            | xargs -0 python3 -m py_compile
+
+      - name: 🔍 Ruff lint
+        run: |
+          python3 -m ruff check claudecode-devos --select E,W,F --ignore E501
 
       - name: 🧾 JSON validation
         run: |
           python3 -m json.tool claudecode-devos/config/state.json >/dev/null
           python3 -m json.tool claudecode-devos/config/projects.json >/dev/null
 
-      - name: 🧠 Local state manager smoke test
+      - name: 🧪 Pytest
         run: |
-          DEVOS_HOME="$PWD/claudecode-devos" python3 claudecode-devos/ops/state_manager.py get system.status
+          python3 -m pytest claudecode-devos/tests/ \
+            --asyncio-mode=auto \
+            -v --tb=short
 
+      - name: 🔐 Bandit security scan
+        run: |
+          python3 -m bandit \
+            -r claudecode-devos \
+            --exclude claudecode-devos/runtime,claudecode-devos/templates,claudecode-devos/tests \
+            --skip B603,B607 \
+            -ll -ii \
+            --format txt || true
+          python3 -m bandit \
+            -r claudecode-devos \
+            --exclude claudecode-devos/runtime,claudecode-devos/templates,claudecode-devos/tests \
+            --skip B603,B607 \
+            -lll -ii \
+            --format txt
+
+      - name: 🔗 Verify internal module imports
+        run: |
+          cd claudecode-devos
+          python3 -c "from evolution.log_collector import collect_log; print('evolution.log_collector OK')"
+          python3 -c "from evolution.optimizer.optimizer import optimize; print('evolution.optimizer OK')"
+          python3 -c "from evolution.prompt_optimizer import evolve_prompt; print('evolution.prompt_optimizer OK')"
+          python3 -c "from ai.issue_factory import state_candidates, suppress_low_priority; print('ai.issue_factory OK')"
+          python3 -c "from ops.decision_engine import decide, ensure_sections; print('ops.decision_engine OK')"
+
+      - name: 🧠 State manager smoke test
+        run: |
+          DEVOS_HOME="$PWD/claudecode-devos" \
+          DEVOS_STATE_FILE="$PWD/claudecode-devos/config/state.json" \
+          python3 claudecode-devos/ops/state_manager.py get system.status

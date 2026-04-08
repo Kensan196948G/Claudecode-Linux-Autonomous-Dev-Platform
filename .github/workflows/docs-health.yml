@@ -26,7 +26,7 @@ jobs:
           test -f claudecode-devos/docs/00_governance/operations_policy.md
           test -f claudecode-devos/docs/03_operations/runtime_rules.md
           test -f claudecode-devos/docs/06_decisions/decision-log.md
-          test -f 'docs/07_GitHub連携（GitHubIntegration）/03_ProjectsとActions（ProjectsAndActions）.md'
+          test -f docs/07_github_integration/03_projects_and_actions.md
 
       - name: 🧭 Mermaid diagrams are present
         run: |
